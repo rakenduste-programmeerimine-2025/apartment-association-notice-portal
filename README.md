@@ -17,6 +17,7 @@
 </p>
 <br/>
 
+
 ## Features
 
 - Works across the entire [Next.js](https://nextjs.org) stack
@@ -32,6 +33,67 @@
 - Components with [shadcn/ui](https://ui.shadcn.com/)
 - Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
   - Environment variables automatically assigned to Vercel project
+
+# User & Community Management System
+
+This project provides a web-based platform for managing residential communities.  
+It supports user roles (Admin and Resident), community organization, announcements, and meeting management.
+
+## Features
+
+### 1. User Management
+- User registration and login  
+- Role-based access control with two levels:
+  - **Admin**
+  - **Resident**
+
+
+### 2. Community / Association Management
+- **Resident**
+  - Join an existing community  
+- **Admin**
+  - Approve or reject member requests  
+  - Remove members  
+  - Control access — only members can view their community content  
+
+
+### 3. Admin Board Notices
+- **Admin**
+  - Create, read, and delete notices  
+  - Categories:
+    - General Notices  
+    - Maintenance & Repairs  
+    - Safety  
+- **Resident**
+  - View notices  
+  - React to notices with "Likes"
+
+
+### 4. Resident Worries (Community Board)
+- **Resident**
+  - Create and read their own worries  
+  - Worries are visible to all community members  
+  - React to worries with "Likes"  
+- **Admin**
+  - Delete inappropriate worries
+
+### 5. Meeting Management
+- **Admin**
+  - Create and read meetings  
+- **Resident**
+  - View all community meetings 
+
+
+
+## Low-fidelity wireframe
+- **Sign In/Sign Up**
+<img width="2090" height="1941" alt="image" src="https://github.com/user-attachments/assets/bf510630-fd64-4929-b79d-27ae32a6c875" />
+  
+- **Admin panel**
+<img width="6104" height="7279" alt="image" src="https://github.com/user-attachments/assets/c97facf7-1d10-48d4-9148-d1fee317cf7b" />
+
+- **User panel**
+<img width="6052" height="4667" alt="image" src="https://github.com/user-attachments/assets/4504dd74-7bbd-4160-a0d0-cea5ea768436" />
 
 ## Demo
 
