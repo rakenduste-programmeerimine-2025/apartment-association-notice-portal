@@ -9,11 +9,11 @@ export function AdminNavbar() {
   const pathname = usePathname();
 
   const links = [
-    { href: '/admin/notices', label: 'Notices' },
-    { href: '/admin/worries', label: 'Worries' },
-    { href: '/admin/residents', label: 'Residents' },
-    { href: '/admin/create-meeting', label: 'Create Meeting' },
-    { href: '/admin/create-notice', label: 'Create Notice' },
+    { href: '/protected/Admin/Notices', label: 'Notices' },
+    { href: '/protected/Admin/Worries', label: 'Worries' }, 
+    { href: '/protected/Admin/Residents', label: 'Residents' },
+    { href: '/protected/Admin/Meetings', label: 'Create Meeting' },
+    { href: '/admin/create-notice', label: 'Create Notice' }, //url needs to be changed to create notice page, there is needs to be such a folder for it.
   ];
 
   return (
