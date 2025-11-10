@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import '@mantine/core/styles.css';
 import { createTheme, MantineProvider } from '@mantine/core';
+import { AdminNavbar } from '@/components/NavBar/AdminNavbar';
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -22,25 +23,24 @@ const geistSans = Geist({
 });
 
 const theme = createTheme({
-  fontFamily: "var(--font-geist-sans), sans-serif",
-  primaryColor: "brand",
+  fontFamily: 'var(--font-geist-sans), sans-serif',
+  primaryColor: 'blue',
   colors: {
     brand: [
-      "#e6f4ff", 
-      "#cceaff",
-      "#99d5ff",
-      "#66c1ff",
-      "#33acff",
-      "#2098e9", 
-      "#1b82c7",
-      "#156ca5",
-      "#105684",
-      "#0a4062",
+      '#e6f4ff',
+      '#cceaff',
+      '#99d5ff',
+      '#66c1ff',
+      '#33acff',
+      '#2098e9',
+      '#1b82c7',
+      '#156ca5',
+      '#105684',
+      '#0a4062',
     ],
   },
   primaryShade: { light: 5, dark: 5 },
 });
-
 
 export default function RootLayout({
   children,
@@ -50,7 +50,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
-        <MantineProvider theme={theme}>{children}</MantineProvider>
+        <MantineProvider theme={theme} defaultColorScheme="light">
+          <AdminNavbar />
+          {children}
+        </MantineProvider>
       </body>
     </html>
   );
