@@ -9,7 +9,7 @@ export function AdminNavbar() {
   const pathname = usePathname();
 
   const links = [
-    { href: '/admin/notices', label: 'Notices' },
+    { href: '/protected/Admin/Notices', label: 'Notices' },
     { href: '/admin/worries', label: 'Worries' },
     { href: '/admin/residents', label: 'Residents' },
     { href: '/admin/create-meeting', label: 'Create Meeting' },
