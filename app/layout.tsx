@@ -1,10 +1,9 @@
-import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
-import { ThemeProvider } from 'next-themes';
-import './globals.css';
+import type { Metadata } from "next";
+import { Geist } from "next/font/google";
+import { ThemeProvider } from "next-themes";
+import { MantineProvider } from "@mantine/core";
+import "./globals.css";
 import '@mantine/core/styles.css';
-import { createTheme, MantineProvider } from '@mantine/core';
-import { AdminNavbar } from '@/components/NavBar/AdminNavbar';
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -12,8 +11,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: 'Next.js and Supabase Starter Kit',
-  description: 'The fastest way to build apps with Next.js and Supabase',
+  title: "",
+  description: "",
 };
 
 const geistSans = Geist({
@@ -22,38 +21,20 @@ const geistSans = Geist({
   subsets: ['latin'],
 });
 
-const theme = createTheme({
-  fontFamily: 'var(--font-geist-sans), sans-serif',
-  primaryColor: 'blue',
-  colors: {
-    brand: [
-      '#e6f4ff',
-      '#cceaff',
-      '#99d5ff',
-      '#66c1ff',
-      '#33acff',
-      '#2098e9',
-      '#1b82c7',
-      '#156ca5',
-      '#105684',
-      '#0a4062',
-    ],
-  },
-  primaryShade: { light: 5, dark: 5 },
-});
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
-        <MantineProvider theme={theme} defaultColorScheme="light">
-          <AdminNavbar />
-          {children}
-        </MantineProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <MantineProvider theme={{ fontFamily: 'Inter, sans-serif' }}>
+            {children}
+          </MantineProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
