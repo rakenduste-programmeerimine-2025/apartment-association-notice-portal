@@ -23,6 +23,7 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+ 
   useEffect(() => {
     const fetchCommunities = async () => {
       const { data, error } = await supabase.from("communities").select("id, name");
@@ -36,11 +37,19 @@ export function SignUpForm() {
     e.preventDefault();
     setError(null);
 
+    // validation
     if (password !== repeatPassword) {
       setError("Passwords do not match");
       return;
     }
-
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+    if (!/\d/.test(password) || !/[A-Za-z]/.test(password)) {
+      setError("Password must contain letters and numbers");
+      return;
+    }
     if (!communityId) {
       setError("Please select a community");
       return;
@@ -49,17 +58,38 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName, flat_number: flatNumber, community_id: communityId },
-          emailRedirectTo: `${window.location.origin}/protected/resident`,
+          data: {
+            full_name: fullName,
+            role: "resident", 
+          },
         },
       });
       if (signUpError) throw signUpError;
 
-      router.push("/protected/resident");
+      if (!signUpData.user) throw new Error("User not created");
+
+      const { error: insertError } = await supabase.from("users").insert({ //tabelisse users
+        id: signUpData.user.id,
+        email,
+        full_name: fullName,
+        flat_number: flatNumber,
+        community_id: communityId,
+        role: "resident",
+      });
+      if (insertError) throw insertError;
+
+      // automaatselt logime
+      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+      if (loginError) throw loginError;
+
+      // redirect useriks
+      router.push("/protected/Resident/Notices");
+
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -71,33 +101,33 @@ export function SignUpForm() {
     <Card className="max-w-md mx-auto mt-20">
       <CardHeader>
         <CardTitle>Sign Up</CardTitle>
-        <CardDescription>Create a new account</CardDescription>
+        <CardDescription>Create a new account (Resident only)</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSignUp} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
+          <div>
             <Label>Full Name</Label>
             <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
           </div>
-          <div className="flex flex-col gap-1">
+          <div>
             <Label>Email</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
-          <div className="flex flex-col gap-1">
+          <div>
             <Label>Password</Label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <div className="flex flex-col gap-1">
+          <div>
             <Label>Repeat Password</Label>
             <Input type="password" value={repeatPassword} onChange={(e) => setRepeatPassword(e.target.value)} required />
           </div>
-          <div className="flex flex-col gap-1">
+          <div>
             <Label>Select Community</Label>
             <select
               value={communityId ?? ""}
               onChange={(e) => setCommunityId(e.target.value)}
               required
-              className="border rounded p-2"
+              className="border rounded p-2 w-full"
             >
               <option value="" disabled>Select your community</option>
               {communities.map((c) => (
@@ -105,21 +135,22 @@ export function SignUpForm() {
               ))}
             </select>
           </div>
-          <div className="flex flex-col gap-1">
+          <div>
             <Label>Flat Number</Label>
             <Input value={flatNumber} onChange={(e) => setFlatNumber(e.target.value)} required />
           </div>
+
           {error && <p className="text-red-500 text-sm">{error}</p>}
+
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Sign Up"}
           </Button>
-          
         </form>
-        <div className="mt-4 text-center text-sm"></div>
-         Already have an account?{" "}
-         <Link href="/auth/login" className="underline underline-offset-4 text-white-600 hover:text-white-800">
-             Log in
-         </Link>
+
+        <div className="mt-4 text-center text-sm">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="underline">Log in</Link>
+        </div>
       </CardContent>
     </Card>
   );
