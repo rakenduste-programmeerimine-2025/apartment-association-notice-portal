@@ -56,6 +56,27 @@ export async function updateNotice(
   revalidatePath('/protected/Admin/Notices');
 }
 
+//edit/update Meeting
+export async function updateMeeting(
+  id: string,
+  values: { title: string; description: string; meeting_date: string }
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('meetings')
+    .update({
+      title: values.title,
+      description: values.description,
+      meeting_date: values.meeting_date,
+    })
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/protected/Admin/Notices');
+}
+
 //delete Notice
 export async function deleteNotice(id: string) {
   const supabase = await createClient();
