@@ -35,6 +35,27 @@ export async function getMeetings(): Promise<Meeting[]> {
   }
 }
 
+//edit/update Notice
+export async function updateNotice(
+  id: string,
+  values: { title: string; content: string; category: string }
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('notices')
+    .update({
+      title: values.title,
+      content: values.content,
+      category: values.category,
+    })
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/protected/Admin/Notices');
+}
+
 //delete Notice
 export async function deleteNotice(id: string) {
   const supabase = await createClient();
