@@ -24,11 +24,22 @@ export function LoginForm() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) throw error;
 
       // 
-      router.push("/protected/resident");
+      const role = authData.user?.user_metadata?.role;
+
+      // redirect
+      if (role === "admin") {
+        router.push("/protected/Admin/Notices");
+      } else {
+        router.push("/protected/Resident/Notices");
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
