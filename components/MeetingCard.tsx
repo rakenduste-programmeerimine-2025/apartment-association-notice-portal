@@ -1,12 +1,15 @@
+import DeleteButtonMeeting from '@/app/protected/Admin/Notices/components/DeleteButtonMeeting';
+import EditButtonMeeting from '@/app/protected/Admin/Notices/components/EditButtonMeeting';
 import { Meeting } from '@/types/Meeting';
-import { Card, Text, Badge, Group, Avatar, Button } from '@mantine/core';
-import { Calendar, Clock, Pencil, Trash } from 'lucide-react';
+import { Card, Text, Badge, Group } from '@mantine/core';
+import { Calendar, Clock } from 'lucide-react';
 
 interface Props {
   meeting: Meeting;
+  role?: 'admin' | 'resident';
 }
 
-export default function MeetingCard({ meeting }: Props) {
+export default function MeetingCard({ meeting, role }: Props) {
   const formattedDate = new Date(meeting.meeting_date).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -41,26 +44,13 @@ export default function MeetingCard({ meeting }: Props) {
       <Text size="sm" c="dimmed" lh={1.5}>
         {meeting.description}
       </Text>
-      <Group justify="flex-end" mt="md">
-        <Button
-          variant="light"
-          color="blue"
-          radius="xl"
-          size="compact-sm"
-          leftSection={<Pencil size={14} />}
-        >
-          Edit
-        </Button>
-        <Button
-          variant="light"
-          color="red"
-          radius="xl"
-          size="compact-sm"
-          leftSection={<Trash size={14} />}
-        >
-          Delete
-        </Button>
-      </Group>
+
+      {role === 'admin' && (
+        <Group justify="flex-end" mt="md">
+          <EditButtonMeeting id={meeting.id} />
+          <DeleteButtonMeeting id={meeting.id} />
+        </Group>
+      )}
     </Card>
   );
 }

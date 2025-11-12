@@ -1,13 +1,15 @@
 'use client';
 import { Card, Text, Badge, Group, Button } from '@mantine/core';
-import { Pencil, Trash } from 'lucide-react';
 import type { Notice } from '@/types/Notice';
+import DeleteButtonNotice from '@/app/protected/Admin/Notices/components/DeleteButtonNotice';
+import EditButtonNotice from '@/app/protected/Admin/Notices/components/EditButtonNotice';
 
 interface Props {
   notice: Notice;
+  role?: 'admin' | 'resident';
 }
 
-export default function NoticeCard({ notice }: Props) {
+export default function NoticeCard({ notice, role }: Props) {
   const date = new Date(notice.created_at);
   const formattedDate = `${date.getUTCDate().toString().padStart(2, '0')} ${date.toLocaleString(
     'en-GB',
@@ -20,7 +22,7 @@ export default function NoticeCard({ notice }: Props) {
     .getUTCMinutes()
     .toString()
     .padStart(2, '0')}`;
-    
+
   //defining the color of badge based on category
   const badgeColor =
     notice.category === 'General'
@@ -50,26 +52,12 @@ export default function NoticeCard({ notice }: Props) {
         {notice.content}
       </Text>
 
-      <Group justify="flex-end" mt="md">
-        <Button
-          variant="light"
-          color="blue"
-          radius="xl"
-          size="compact-sm"
-          leftSection={<Pencil size={14} />}
-        >
-          Edit
-        </Button>
-        <Button
-          variant="light"
-          color="red"
-          radius="xl"
-          size="compact-sm"
-          leftSection={<Trash size={14} />}
-        >
-          Delete
-        </Button>
-      </Group>
+      {role === 'admin' && (
+        <Group justify="flex-end" mt="md">
+          <EditButtonNotice id={notice.id} />
+          <DeleteButtonNotice id={notice.id} />
+        </Group>
+      )}
     </Card>
   );
 }

@@ -5,7 +5,6 @@ import { getNotices, getMeetings } from './actions';
 import { Notice } from '@/types/Notice';
 import { Meeting } from '@/types/Meeting';
 
-
 export default async function AdminNoticesPage() {
   const notices: Notice[] = await getNotices();
   const meetings: Meeting[] = await getMeetings();
@@ -20,7 +19,7 @@ export default async function AdminNoticesPage() {
 
           <Flex direction="column" gap="sm" mt="sm" w="100%">
             {notices && notices.length > 0 ? (
-              notices.map((notice) => <NoticeCard key={notice.id} notice={notice} />)
+              notices.map((notice) => <NoticeCard key={notice.id} notice={notice} role="admin" />)
             ) : (
               <Text size="sm" c="dimmed">
                 No notices yet.
@@ -37,7 +36,9 @@ export default async function AdminNoticesPage() {
           </Text>
           <Flex direction="column" gap="sm" mt="sm" w="100%">
             {meetings && meetings.length > 0 ? (
-              meetings.map((meeting) => <MeetingCard key={meeting.id} meeting={meeting} />)
+              meetings.map((meeting) => (
+                <MeetingCard key={meeting.id} meeting={meeting} role="admin" />
+              ))
             ) : (
               <Text size="sm" c="dimmed">
                 No meetings yet.
