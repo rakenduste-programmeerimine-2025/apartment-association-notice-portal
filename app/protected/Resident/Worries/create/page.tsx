@@ -1,11 +1,11 @@
 import { Container, Title, Text } from '@mantine/core';
 
-export default function ResidentMeetingsPage() {
+export default function CreateWorryPage() {
   return (
     <Container size="lg" py="lg">
-      <Title order={2}>Meetings</Title>
+      <Title order={2}>Create worry</Title>
       <Text mt="sm" c="dimmed">
-        This is where upcoming and past meetings of your association can be shown.
+        Here you will be able to create worries
       </Text>
     </Container>
   );
