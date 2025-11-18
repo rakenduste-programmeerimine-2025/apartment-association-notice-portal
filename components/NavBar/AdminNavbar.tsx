@@ -12,7 +12,7 @@ export function AdminNavbar() {
     { href: '/protected/Admin/Notices', label: 'Notices' },
     { href: '/protected/Admin/Worries', label: 'Worries' }, 
     { href: '/protected/Admin/Residents', label: 'Residents' },
-    { href: '/protected/Admin/Meetings', label: 'Create Meeting' },
+    { href: '/protected/Admin/Create-Meetings', label: 'Create Meetings' },
     { href: '/admin/create-notice', label: 'Create Notice' }, //url needs to be changed to create notice page, there is needs to be such a folder for it.
   ];
 
