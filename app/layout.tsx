@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import "./globals.css";
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -32,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           disableTransitionOnChange
         >
           <MantineProvider theme={{ fontFamily: 'Inter, sans-serif' }}>
+            <Notifications position="top-right" />   
             {children}
           </MantineProvider>
         </ThemeProvider>
