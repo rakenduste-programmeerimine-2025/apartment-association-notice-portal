@@ -1,7 +1,8 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, Group, Container, Paper } from '@mantine/core';
+import { Group, Container, Paper } from '@mantine/core';
+import { Button } from '@/components/ui/button';
 import { LogoutButton } from '@/components/logout-button';
 
 export function UserNavbar() {
@@ -11,7 +12,7 @@ export function UserNavbar() {
   const links = [
     { href: '/protected/Resident/Notices', label: 'Notices' },
     { href: '/protected/Resident/Worries', label: 'Worries' },
-    { href: '/protected/Resident/Worries/create', label: 'Create Worry' },
+    { href: '/protected/Resident/Worries/Create', label: 'Create Worry' },
   ];
 
   return (
@@ -25,8 +26,8 @@ export function UserNavbar() {
                 <Button
                   key={href}
                   onClick={() => router.push(href)}
-                  variant={isActive ? 'light' : 'subtle'}
-                  size="xs"
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  size="sm"
                 >
                   {label}
                 </Button>
