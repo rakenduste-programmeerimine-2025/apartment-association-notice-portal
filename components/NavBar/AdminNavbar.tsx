@@ -1,8 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Group, Container, Paper } from '@mantine/core';
-import { Button } from '@/components/ui/button';
+import { Button, Group, Container, Paper } from '@mantine/core';
 import { LogoutButton } from '@/components/logout-button';
 
 export function AdminNavbar() {
@@ -11,10 +10,10 @@ export function AdminNavbar() {
 
   const links = [
     { href: '/protected/Admin/Notices', label: 'Notices' },
-    { href: '/protected/Admin/Worries', label: 'Worries' },
+    { href: '/protected/Admin/Worries', label: 'Worries' }, 
     { href: '/protected/Admin/Residents', label: 'Residents' },
-    { href: '/protected/Admin/Meetings', label: 'Create Meeting' },
-    { href: '/admin/create-notice', label: 'Create Notice' },
+    { href: '/protected/Admin/Create-Meetings', label: 'Create Meetings' },
+    { href: '/protected/Admin/CreateNotice', label: 'Create Notice' }, //url needs to be changed to create notice page, there is needs to be such a folder for it.
   ];
 
   return (
@@ -28,8 +27,8 @@ export function AdminNavbar() {
                 <Button
                   key={href}
                   onClick={() => router.push(href)}
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  size="sm"
+                  variant={isActive ? 'light' : 'subtle'}
+                  size="xs"
                 >
                   {label}
                 </Button>
@@ -43,3 +42,5 @@ export function AdminNavbar() {
     </Paper>
   );
 }
+
+
