@@ -1,20 +1,28 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
-import { Button } from '@mantine/core';
-import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { notifications } from "@mantine/notifications";
 
 export function LogoutButton() {
   const router = useRouter();
 
-  const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/auth/login');
+  const handleLogout = () => {
+    // 1. Clear sid cookie (your auth session)
+    document.cookie = "sid=; Max-Age=0; path=/;";
+
+    // 2. Show confirmation toast
+    notifications.show({
+      title: "Logged out",
+      message: "You have been successfully logged out.",
+    });
+
+    // 3. Redirect to login and replace history so Back doesn’t go back to protected page
+    router.replace("/auth/login");
   };
 
   return (
-    <Button onClick={logout} variant="filled" color="gray" size="xs">
+    <Button variant="default" size="sm" onClick={handleLogout}>
       Logout
     </Button>
   );
