@@ -1,13 +1,20 @@
 'use client';
+import { useState } from 'react';
 import { Card, Text, Badge, Group, Button } from '@mantine/core';
-import { Pencil, Trash } from 'lucide-react';
 import type { Notice } from '@/types/Notice';
+import DeleteButtonNotice from '@/app/protected/Admin/Notices/components/DeleteButtonNotice';
+import EditButtonNotice from '@/app/protected/Admin/Notices/components/EditButtonNotice';
+import EditNoticeModal from '@/app/protected/Admin/Notices/components/EditNoticeModal';
+import { updateNotice } from '@/app/protected/Admin/Notices/actions';
 
 interface Props {
   notice: Notice;
+  role?: 'admin' | 'resident';
 }
 
-export default function NoticeCard({ notice }: Props) {
+export default function NoticeCard({ notice, role }: Props) {
+  const [opened, setOpened] = useState(false);
+
   const date = new Date(notice.created_at);
   const formattedDate = `${date.getUTCDate().toString().padStart(2, '0')} ${date.toLocaleString(
     'en-GB',
@@ -20,7 +27,7 @@ export default function NoticeCard({ notice }: Props) {
     .getUTCMinutes()
     .toString()
     .padStart(2, '0')}`;
-    
+
   //defining the color of badge based on category
   const badgeColor =
     notice.category === 'General'
@@ -31,45 +38,44 @@ export default function NoticeCard({ notice }: Props) {
           ? 'blue'
           : 'gray';
 
+  const handleUpdate = async (values: { title: string; content: string; category: string }) => {
+    await updateNotice(notice.id, values);
+  };
+
   return (
-    <Card radius="md" padding="sm" withBorder style={{ maxWidth: 600, margin: '18xpx auto' }}>
-      <Group justify="space-between" mb="xs">
-        <Badge color={badgeColor} size="sm" variant="filled">
-          {notice.category}
-        </Badge>
-        <Text size="xs" c="gray">
-          Created at: {formattedDate}, {formattedTime},
+    <>
+      <Card radius="md" padding="sm" withBorder style={{ maxWidth: 600, margin: '18xpx auto' }}>
+        <Group justify="space-between" mb="xs">
+          <Badge color={badgeColor} size="sm" variant="filled">
+            {notice.category}
+          </Badge>
+          <Text size="xs" c="gray">
+            Created at: {formattedDate}, {formattedTime},
+          </Text>
+        </Group>
+
+        <Text fw={600} size="md" mb={4}>
+          {notice.title}
         </Text>
-      </Group>
 
-      <Text fw={600} size="md" mb={4}>
-        {notice.title}
-      </Text>
+        <Text size="sm" c="dimmed" lh={1.5}>
+          {notice.content}
+        </Text>
 
-      <Text size="sm" c="dimmed" lh={1.5}>
-        {notice.content}
-      </Text>
+        {role === 'admin' && (
+          <Group justify="flex-end" mt="md">
+            <EditButtonNotice id={notice.id} onClick={() => setOpened(true)} />
+            <DeleteButtonNotice id={notice.id} />
+          </Group>
+        )}
+      </Card>
 
-      <Group justify="flex-end" mt="md">
-        <Button
-          variant="light"
-          color="blue"
-          radius="xl"
-          size="compact-sm"
-          leftSection={<Pencil size={14} />}
-        >
-          Edit
-        </Button>
-        <Button
-          variant="light"
-          color="red"
-          radius="xl"
-          size="compact-sm"
-          leftSection={<Trash size={14} />}
-        >
-          Delete
-        </Button>
-      </Group>
-    </Card>
+      <EditNoticeModal
+        opened={opened}
+        onClose={() => setOpened(false)}
+        notice={notice}
+        onSubmit={handleUpdate}
+      />
+    </>
   );
 }
