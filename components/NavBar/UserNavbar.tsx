@@ -12,7 +12,7 @@ export function UserNavbar() {
   const links = [
     { href: '/protected/Resident/Notices', label: 'Notices' },
     { href: '/protected/Resident/Worries', label: 'Worries' },
-    { href: '/protected/Resident/Worries/Create', label: 'Create Worry' },
+    { href: '/protected/Resident/Create-Worry', label: 'Create Worry' },
   ];
 
   return (
