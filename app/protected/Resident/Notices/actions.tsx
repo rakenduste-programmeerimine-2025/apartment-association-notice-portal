@@ -51,7 +51,7 @@ export async function getMeetings(): Promise<Meeting[]> {
 
     const { data, error } = await supabase
       .from('meetings')
-      .select('id, title, description, meeting_date, community_id')
+      .select('id, title, description, meeting_date, community_id, duration')
       .eq('community_id', profile.community_id)
       .order('meeting_date', { ascending: true });
 
