@@ -52,7 +52,7 @@ export async function getMeetings(): Promise<Meeting[]> {
 
     const { data, error } = await supabase
       .from('meetings')
-      .select('id, title, description, meeting_date, community_id')
+      .select('id, title, description, meeting_date, duration, community_id')
       .eq('community_id', profile.community_id)
       .order('meeting_date', { ascending: true });
 
@@ -101,7 +101,7 @@ export async function updateNotice(
 //edit/update Meeting
 export async function updateMeeting(
   id: string,
-  values: { title: string; description: string; meeting_date: string }
+  values: { title: string; description: string; meeting_date: string;duration: string}
 ) {
   const supabase = await createClient();
 
@@ -122,6 +122,7 @@ export async function updateMeeting(
       title: values.title,
       description: values.description,
       meeting_date: values.meeting_date,
+      duration: values.duration,
     })
     .eq('id', id)
     .eq('community_id', profile.community_id);

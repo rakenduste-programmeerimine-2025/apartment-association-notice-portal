@@ -13,6 +13,7 @@ import {
   Stack,
   Text,
   LoadingOverlay,
+  Select,
 } from '@mantine/core';
 
 import { DatePickerInput, TimeInput } from '@mantine/dates';
@@ -28,18 +29,21 @@ export default function CreateMeetingForm() {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<string | null>(null);
   const [time, setTime] = useState<string>('');
+  const [duration, setDuration] = useState('');
 
   function validate(formData: FormData) {
     const title = String(formData.get('title') ?? '').trim();
     const description = String(formData.get('description') ?? '').trim();
     const dateRaw = formData.get('date');
     const timeRaw = formData.get('time');
+    const durationRaw = formData.get('duration');
 
     if (!title) return 'Title is required.';
     if (!description) return 'Description is required.';
     if (title.length > 200) return 'Title is too long.';
     if (!dateRaw) return 'Select a date.';
     if (!timeRaw) return 'Select a time.';
+    if (!durationRaw) return 'Select a duration.';
 
     const date = new Date(String(dateRaw));
     const [h, m] = String(timeRaw).split(':').map(Number);
@@ -72,6 +76,7 @@ export default function CreateMeetingForm() {
     setDescription('');
     setDate(null);
     setTime('');
+    setDuration('');
 
     startTransition(async () => {
       try {
@@ -167,10 +172,21 @@ export default function CreateMeetingForm() {
             value={time}
             onChange={(e) => setTime(e.target.value)}
           />
-
-          <Text size="sm" c="dimmed">
-            Duration: <strong>1 hour</strong>
-          </Text>
+        <Select
+            name="duration" 
+            label="Duration" 
+            placeholder="Select duration" 
+            radius="md"
+            required 
+            data={[
+              { value: '1 hour', label: '1 hour' },
+              { value: '1.5 hours', label: '1.5 hours' },
+              { value: '2 hours', label: '2 hours' },
+              { value: '2.5 hours', label: '2.5 hours' },
+            ]}
+            value={duration}
+            onChange={(value) => setDuration(value!)}
+          />
 
           <Group justify="flex-end" mt="sm">
             <Button type="submit" radius="md" size="md">

@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal, TextInput, Textarea, Button, Stack, Group } from '@mantine/core';
+import { Modal, TextInput, Textarea, Button, Stack, Group,Select  } from '@mantine/core';
 import { useState } from 'react';
 import type { Meeting } from '@/types/Meeting';
 import { Type, FileText, CalendarClock, Check } from 'lucide-react';
@@ -13,6 +13,7 @@ interface Props {
     title: string;
     description: string;
     meeting_date: string;
+    duration: string;
   }) => Promise<void> | void;
 }
 
@@ -30,12 +31,13 @@ export default function EditMeetingModal({ opened, onClose, meeting, onSubmit }:
   const [title, setTitle] = useState(meeting.title);
   const [description, setDescription] = useState(meeting.description);
   const [meetingDate, setMeetingDate] = useState(formatDate(meeting.meeting_date));
+  const [duration, setDuration] = useState(meeting.duration || '');
   const isDateValid = !isNaN(new Date(meetingDate).getTime());
   const isFormValid =
-    title.trim() !== '' && description.trim() !== '' && meetingDate !== '' && isDateValid;
+    title.trim() !== '' && description.trim() !== '' && meetingDate !== '' && duration.trim() !== '' && isDateValid;
 
   const handleSave = async () => {
-    await onSubmit({ title, description, meeting_date: meetingDate });
+    await onSubmit({ title, description, meeting_date: meetingDate,duration });
     onClose();
   };
 
@@ -76,7 +78,14 @@ export default function EditMeetingModal({ opened, onClose, meeting, onSubmit }:
           onKeyDown={handleKeyPress}
           error={!isDateValid ? 'Invalid date' : undefined}
         />
-
+        <Select
+          label="Duration"
+          placeholder="Select duration"
+          data={['1 hour', '1.5 hours', '2 hours', '2.5 hours']}
+          value={duration}
+          onChange={(val) => setDuration(val!)}
+          required
+        />
         <Group justify="flex-end" mt="md">
           <Button variant="light" color="gray" onClick={onClose}>
             Cancel

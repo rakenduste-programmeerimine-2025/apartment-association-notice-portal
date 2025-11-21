@@ -32,6 +32,7 @@ export default function MeetingCard({ meeting, role }: Props) {
     title: string;
     description: string;
     meeting_date: string;
+    duration: string;
   }) => {
     await updateMeeting(meeting.id, values);
   };
@@ -48,9 +49,9 @@ export default function MeetingCard({ meeting, role }: Props) {
               {formattedTime}
             </Badge>
           </Group>
-
+      
           <Badge color="blue" size="md" variant="dot">
-            1 hour
+            {meeting.duration}
           </Badge>
         </Group>
 
