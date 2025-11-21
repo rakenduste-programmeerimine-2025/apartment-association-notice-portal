@@ -9,10 +9,24 @@ import type { Notice } from '@/types/Notice';
 export async function getNotices(): Promise<Notice[]> {
   try {
     const supabase = await createClient();
+
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth?.user) return [];
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('community_id')
+      .eq('id', auth.user.id)
+      .single();
+
+    if (!profile?.community_id) return [];
+
     const { data, error } = await supabase
       .from('notices')
       .select('id, title, content, category, community_id, created_at')
+      .eq('community_id', profile.community_id)
       .order('created_at', { ascending: false });
+
     if (error) throw error;
     return data ?? [];
   } catch (err) {
@@ -24,10 +38,24 @@ export async function getNotices(): Promise<Notice[]> {
 export async function getMeetings(): Promise<Meeting[]> {
   try {
     const supabase = await createClient();
+
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth?.user) return [];
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('community_id')
+      .eq('id', auth.user.id)
+      .single();
+
+    if (!profile?.community_id) return [];
+
     const { data, error } = await supabase
       .from('meetings')
-      .select('id, title, description, meeting_date')
+      .select('id, title, description, meeting_date, community_id')
+      .eq('community_id', profile.community_id)
       .order('meeting_date', { ascending: true });
+
     if (error) throw error;
     return data ?? [];
   } catch (err) {
@@ -42,6 +70,19 @@ export async function updateNotice(
 ) {
   const supabase = await createClient();
 
+  // get logged in user + community
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
+
+  // secure update
   const { error } = await supabase
     .from('notices')
     .update({
@@ -49,7 +90,8 @@ export async function updateNotice(
       content: values.content,
       category: values.category,
     })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
 
   if (error) throw new Error(error.message);
 
@@ -63,6 +105,17 @@ export async function updateMeeting(
 ) {
   const supabase = await createClient();
 
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
+
   const { error } = await supabase
     .from('meetings')
     .update({
@@ -70,7 +123,8 @@ export async function updateMeeting(
       description: values.description,
       meeting_date: values.meeting_date,
     })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
 
   if (error) throw new Error(error.message);
 
@@ -80,7 +134,23 @@ export async function updateMeeting(
 //delete Notice
 export async function deleteNotice(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from('notices').delete().eq('id', id);
+
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
+
+  const { error } = await supabase
+    .from('notices')
+    .delete()
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
 
   if (error) throw new Error(error.message);
 
@@ -90,7 +160,23 @@ export async function deleteNotice(id: string) {
 //delete Meeting
 export async function deleteMeeting(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from('meetings').delete().eq('id', id);
+
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
+
+  const { error } = await supabase
+    .from('meetings')
+    .delete()
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
 
   if (error) throw new Error(error.message);
 
