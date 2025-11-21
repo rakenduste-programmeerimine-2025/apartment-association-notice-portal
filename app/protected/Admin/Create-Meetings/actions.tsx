@@ -13,6 +13,7 @@ export async function createMeeting(formData: FormData) {
     const rawDescription = formData.get("description");
     const rawDate = formData.get("date");
     const rawTime = formData.get("time");
+    const rawDuration = formData.get("duration");
 
 
     if (typeof rawTitle !== "string") throw new Error("ERROR_INVALID_TITLE");
@@ -21,9 +22,11 @@ export async function createMeeting(formData: FormData) {
     }
     if (typeof rawDate !== "string") throw new Error("ERROR_MISSING_DATE");
     if (typeof rawTime !== "string") throw new Error("ERROR_MISSING_TIME");
+    if (typeof rawDuration !== "string") throw new Error("ERROR_INVALID_DURATION");
 
     const title = sanitize(rawTitle);
     const description = sanitize(rawDescription ?? "");
+    const duration = sanitize(rawDuration);
 
     if (!title) throw new Error("ERROR_NO_TITLE");
     if (title.length > 120) throw new Error("ERROR_TITLE_TOO_LONG");
@@ -60,6 +63,7 @@ export async function createMeeting(formData: FormData) {
       description,
       meeting_date: date.toISOString(),
       created_by: auth.user.id,
+      duration,
       community_id: profile.community_id,
     });
 
