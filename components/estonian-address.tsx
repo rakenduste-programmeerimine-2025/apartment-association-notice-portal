@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useId } from "react";
 
 export interface EstonianAddressData {
   full_address: string;
@@ -51,11 +51,14 @@ declare global {
 
 export function EstonianAddress({
   onSelect,
-  width = "100%",
-  height = "420px",
+   //width = "100%",
+   //height = "420px",
 }: EstonianAddressProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null); //  
+  const id = useId();
   const callbackRef = useRef(onSelect);
+
+
 
   useEffect(() => {
     callbackRef.current = onSelect;
@@ -96,10 +99,10 @@ export function EstonianAddress({
     }
 
     const timer = setInterval(() => {
-      if (!window.InAadress || !containerRef.current) return;
+      if (!window.InAadress || !ref.current) return;
       clearInterval(timer);
 
-      const container = containerRef.current;
+      const container = ref.current;
       container.style.position = "relative";
       container.style.overflow = "visible";
 
@@ -153,18 +156,19 @@ export function EstonianAddress({
     return () => clearInterval(timer);
   }, []);
 
-  return (
+ return (
     <div
-      ref={containerRef}
-      id="InAadressDiv"
+      ref={ref}
+      id={"ina-" + id}
       style={{
-        width,
-        height,
-        borderRadius: "8px",
+        width: "100%",
+        height: "45px",        // 
+        maxHeight: "45px",     // 
         border: "1px solid #374151",
+        borderRadius: "6px",
+        overflow: "visible",   
         position: "relative",
-        overflow: "visible",
-        zIndex: 10,
+        zIndex: 50,
       }}
     />
   );
