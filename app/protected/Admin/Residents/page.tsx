@@ -13,19 +13,24 @@ import {
   Badge,
 } from '@mantine/core';
 import { Button } from '@/components/ui/button';
+import type { CommunityId } from '@/types/community';
 
 type User = {
   id: string;
   email: string | null;
   full_name: string | null;
   role: 'admin' | 'resident' | null;
-  community_id: string | null;
+  community_id: CommunityId | null;
   flat_number: string | null;
   created_at: string;
   status: 'pending' | 'approved' | 'rejected' | null;
 };
 
 const supabase = createClient();
+
+// Read community_id from env so each developer / environment can configure it
+const COMMUNITY_ID: CommunityId | '' =
+  (process.env.NEXT_PUBLIC_COMMUNITY_ID as CommunityId | undefined) ?? '';
 
 export default function AdminResidentsPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -36,21 +41,33 @@ export default function AdminResidentsPage() {
     const fetchUsers = async () => {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from('users')
-        .select(
-          'id, email, full_name, role, community_id, flat_number, created_at, status',
-        )
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('users')
+          .select(
+            'id, email, full_name, role, community_id, flat_number, created_at, status',
+          )
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching users:', error.message);
+        // If COMMUNITY_ID is set, filter by it
+        if (COMMUNITY_ID) {
+          query = query.eq('community_id', COMMUNITY_ID);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Error fetching users:', error.message);
+          setUsers([]);
+        } else {
+          setUsers((data || []) as User[]);
+        }
+      } catch (err) {
+        console.error(err);
         setUsers([]);
-      } else {
-        setUsers((data || []) as User[]);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchUsers();

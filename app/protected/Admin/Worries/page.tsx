@@ -12,6 +12,7 @@ import {
   ScrollArea,
 } from '@mantine/core';
 import { Button } from '@/components/ui/button';
+import type { CommunityId } from '@/types/community';
 
 type Worry = {
   id: string;
@@ -19,10 +20,14 @@ type Worry = {
   content: string | null;
   created_at: string;
   created_by: string | null;
-  community_id: string | number | null;
+  community_id: CommunityId;
 };
 
 const supabase = createClient();
+
+// 🔹 Read community_id from env so it's configurable per developer / environment
+const COMMUNITY_ID: CommunityId | '' =
+  (process.env.NEXT_PUBLIC_COMMUNITY_ID as CommunityId | undefined) ?? '';
 
 export default function AdminWorriesPage() {
   const [worries, setWorries] = useState<Worry[]>([]);
@@ -33,19 +38,31 @@ export default function AdminWorriesPage() {
     const fetchWorries = async () => {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from('worries')
-        .select('id, title, content, created_at, created_by, community_id')
-        .order('created_at', { ascending: false });
+      try {
+        const query = supabase
+          .from('worries')
+          .select('id, title, content, created_at, created_by, community_id')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching worries:', error.message);
+        // Kui COMMUNITY_ID on seadistatud, filtreeri selle järgi
+        if (COMMUNITY_ID) {
+          query.eq('community_id', COMMUNITY_ID);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Error fetching worries:', error.message);
+          setWorries([]);
+        } else {
+          setWorries((data || []) as Worry[]);
+        }
+      } catch (err) {
+        console.error(err);
         setWorries([]);
-      } else {
-        setWorries((data || []) as Worry[]);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchWorries();
