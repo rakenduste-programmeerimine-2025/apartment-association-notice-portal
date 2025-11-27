@@ -10,9 +10,10 @@ interface Props {
   onClose: () => void;
   notice: Notice;
   onSubmit: (values: { title: string; content: string; category: string }) => Promise<void> | void;
+  onAfterSave?: () => void;
 }
 
-export default function EditNoticeModal({ opened, onClose, notice, onSubmit }: Props) {
+export default function EditNoticeModal({ opened, onClose, notice, onSubmit, onAfterSave }: Props) {
   const [title, setTitle] = useState(notice.title);
   const [content, setContent] = useState(notice.content);
   const [category, setCategory] = useState(notice.category);
@@ -20,6 +21,7 @@ export default function EditNoticeModal({ opened, onClose, notice, onSubmit }: P
   const handleSave = async () => {
     await onSubmit({ title, content, category });
     onClose();
+    if (onAfterSave) onAfterSave();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
