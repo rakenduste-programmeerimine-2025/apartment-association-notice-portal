@@ -26,10 +26,26 @@ export default function AdminNoticesPage() {
     setNotices(prev => prev.map(n => n.id === id ? { ...n, ...values } : n));
   };
 
-  const handleDeleteNotice = (id: string) => {
-    setNotices(prev => prev.filter(n => n.id !== id));
-    setCount(prev => prev - 1);
-  };
+   const handleDeleteNotice = async (id: string) => {
+  setNotices(prev => prev.filter(n => n.id !== id));
+  setCount(prev => prev - 1);
+
+  if (notices.length === 1 && page > 1) {
+    const newPage = page - 1;
+    setPage(newPage);
+    router.push(`?page=${newPage}`);
+    const { data } = await getNotices(newPage, itemsPerPage);
+    setNotices(data);
+    return;
+  }
+
+  // 
+  const currentLength = notices.length;
+  if (currentLength - 1 < itemsPerPage && page * itemsPerPage < count) {
+    const { data } = await getNotices(page, itemsPerPage);
+    setNotices(data);
+  }
+};
 
   const handleUpdateMeeting = (id: string, values: { title: string; description: string; meeting_date: string; duration: string }) => {
   setMeetings(prev => prev.map(m => m.id === id ? { ...m, ...values } : m));
