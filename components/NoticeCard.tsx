@@ -16,17 +16,19 @@ interface Props {
 
 export default function NoticeCard({ notice, role, onUpdate, onDelete }: Props) {
   const [opened, setOpened] = useState(false);
+  const date = new Date(notice.created_at + "Z");
 
-  const date = new Date(notice.created_at);
-  const formattedDate = `${date.getUTCDate().toString().padStart(2, '0')} ${date.toLocaleString(
-    'en-GB',
-    { month: 'short' }
-  )} ${date.getUTCFullYear()}`;
+  const formattedDate = date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
-  const formattedTime = `${date.getUTCHours().toString().padStart(2, '0')}:${date
-    .getUTCMinutes()
-    .toString()
-    .padStart(2, '0')}`;
+  const formattedTime = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
   const badgeColor =
     notice.category === 'General'
