@@ -20,6 +20,7 @@ import { DatePickerInput, TimeInput } from '@mantine/dates';
 import { useTransition, useState } from 'react';
 import { createMeeting } from '../actions';
 import { FileText, Calendar, Clock } from 'lucide-react';
+import { notifications } from '@mantine/notifications';
 
 export default function CreateMeetingForm() {
   const [isPending, startTransition] = useTransition();
@@ -81,6 +82,12 @@ export default function CreateMeetingForm() {
     startTransition(async () => {
       try {
         await createMeeting(formData);
+
+        notifications.show({
+          title: 'Meeting Created',
+          message: 'Your meeting has been successfully created!',
+          color: 'green',
+        });
       } catch (err) {
         if (err instanceof Error) {
           const map: Record<string, string> = {
@@ -101,8 +108,18 @@ export default function CreateMeetingForm() {
 
           const message = map[err.message] ?? 'Unexpected server error.';
           setError(message);
+          notifications.show({
+            title: 'Error',
+            message: message,
+            color: 'red',
+          });
         } else {
           setError('Unexpected server error.');
+          notifications.show({
+            title: 'Error',
+            message: 'An unexpected error occurred. Please try again later.',
+            color: 'red',
+          });
         }
       }
     });
