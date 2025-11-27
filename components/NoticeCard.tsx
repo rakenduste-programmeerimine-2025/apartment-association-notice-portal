@@ -12,9 +12,10 @@ interface Props {
   role?: 'admin' | 'resident';
   onUpdate?: (values: { title: string; content: string; category: string }) => void; // 
   onDelete?: () => void; 
+  onAfterSave?: () => void; 
 }
 
-export default function NoticeCard({ notice, role, onUpdate, onDelete }: Props) {
+export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSave }: Props) {
   const [opened, setOpened] = useState(false);
 
   const date = new Date(notice.created_at);
@@ -81,6 +82,7 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete }: Props) 
         onClose={() => setOpened(false)}
         notice={notice}
         onSubmit={handleUpdate} 
+        onAfterSave={onAfterSave}
       />
     </>
   );

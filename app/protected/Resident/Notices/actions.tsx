@@ -4,8 +4,13 @@ import { createClient } from '@/lib/supabase/server';
 import { Meeting } from '@/types/Meeting';
 import type { Notice } from '@/types/Notice';
 
-// Notices 
-export async function getNotices(page = 1, limit = 3): Promise<{ data: Notice[]; count: number }> {
+// Notices
+export async function getNotices(
+  page = 1,
+  limit = 3,
+  category?: string,
+  sort: 'newest' | 'oldest' = 'newest'
+): Promise<{ data: Notice[]; count: number }> {
   try {
     const supabase = await createClient();
 
@@ -23,13 +28,18 @@ export async function getNotices(page = 1, limit = 3): Promise<{ data: Notice[];
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    const { data, count, error } = await supabase
+    let query = supabase
       .from('notices')
       .select('id, title, content, category, community_id, created_at', { count: 'exact' })
-      .eq('community_id', profile.community_id)
-      .order('created_at', { ascending: false })
-      .range(from, to);
+      .eq('community_id', profile.community_id);
 
+    if (category && category !== '') {
+      query = query.eq('category', category);
+    }
+
+    query = query.order('created_at', { ascending: sort === 'oldest' });
+
+    const { data, count, error } = await query.range(from, to); 
     if (error) throw error;
 
     return { data: data ?? [], count: count ?? 0 };
@@ -38,7 +48,7 @@ export async function getNotices(page = 1, limit = 3): Promise<{ data: Notice[];
   }
 }
 
-// Meetings 
+// Meetings
 export async function getMeetings(): Promise<Meeting[]> {
   try {
     const supabase = await createClient();

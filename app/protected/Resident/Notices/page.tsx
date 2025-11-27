@@ -8,6 +8,7 @@ import MeetingCard from '@/components/MeetingCard';
 import { getNotices, getMeetings } from './actions';
 import { Notice } from '@/types/Notice';
 import { Meeting } from '@/types/Meeting';
+import FiltersNotices from '@/components/FiltersNotices';
 
 export default function ResidentNoticesPage() {
   const searchParams = useSearchParams();
@@ -16,6 +17,15 @@ export default function ResidentNoticesPage() {
   const pageParam = searchParams.get('page');
   const initialPage = Number(pageParam) || 1;
 
+  const category = searchParams.get('category') ?? '';
+  const sort = (searchParams.get('sort') as 'newest' | 'oldest') ?? 'newest';
+
+  const buildPageUrl = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(newPage));
+    return `?${params.toString()}`;
+  };
+  
   const [page, setPage] = useState(initialPage);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [count, setCount] = useState(0);
@@ -28,7 +38,7 @@ export default function ResidentNoticesPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data, count } = await getNotices(page, itemsPerPage);
+      const { data, count } = await getNotices(page, itemsPerPage, category || undefined, sort);
       setNotices(data);
       setCount(count);
 
@@ -36,7 +46,7 @@ export default function ResidentNoticesPage() {
       setMeetings(meetingsData);
     }
     fetchData();
-  }, [page]);
+  }, [page, category, sort]);
 
   const totalPages = Math.ceil(count / itemsPerPage);
 
@@ -44,7 +54,10 @@ export default function ResidentNoticesPage() {
     <Flex justify="center" align="flex-start" gap="lg" mt="lg" px="md">
       {/* NOTICES */}
       <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }} align="flex-start">
-        <Text size="xl" fw={700}>Notices</Text>
+        <Flex justify="space-between" align="center" w="100%">
+          <Text size="xl" fw={700}>Notices</Text>
+          <FiltersNotices />
+        </Flex>
         <Flex direction="column" gap="sm" mt="sm" w="100%">
           {notices.length > 0 ? (
             notices.map((notice) => (
@@ -65,7 +78,7 @@ export default function ResidentNoticesPage() {
                 fw={600}
                 c="blue"
                 style={{ cursor: 'pointer' }}
-                onClick={() => router.push(`?page=${page - 1}`)}
+                onClick={() => router.push(buildPageUrl(page - 1))}
               >
                 ← Previous
               </Text>
@@ -76,7 +89,7 @@ export default function ResidentNoticesPage() {
                 fw={600}
                 c="blue"
                 style={{ cursor: 'pointer' }}
-                onClick={() => router.push(`?page=${page + 1}`)}
+                onClick={() => router.push(buildPageUrl(page + 1))}
               >
                 Next →
               </Text>

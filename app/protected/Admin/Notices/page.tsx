@@ -8,6 +8,7 @@ import MeetingCard from '@/components/MeetingCard';
 import { getNotices, getMeetings } from './actions';
 import { Notice } from '@/types/Notice';
 import { Meeting } from '@/types/Meeting';
+import FiltersNotices from '@/components/FiltersNotices';
 
 export default function AdminNoticesPage() {
   const searchParams = useSearchParams();
@@ -16,12 +17,21 @@ export default function AdminNoticesPage() {
   const pageParam = searchParams.get('page');
   const initialPage = Number(pageParam) || 1;
 
+  const category = searchParams.get('category') ?? '';
+  const sort = (searchParams.get('sort') as 'newest' | 'oldest') ?? 'newest';
+
   const [page, setPage] = useState(initialPage);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [count, setCount] = useState(0);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const itemsPerPage = 3;//sina muuta voime kus palju lehel naitame teadet
 
+  const buildPageUrl = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(newPage));
+    return `?${params.toString()}`;
+  };
+  
   const handleUpdateNotice = (id: string, values: { title: string; content: string; category: string }) => {
     setNotices(prev => prev.map(n => n.id === id ? { ...n, ...values } : n));
   };
@@ -33,8 +43,8 @@ export default function AdminNoticesPage() {
   if (notices.length === 1 && page > 1) {
     const newPage = page - 1;
     setPage(newPage);
-    router.push(`?page=${newPage}`);
-    const { data } = await getNotices(newPage, itemsPerPage);
+    router.push(buildPageUrl(newPage));
+    const { data } = await getNotices(newPage, itemsPerPage, category, sort);
     setNotices(data);
     return;
   }
@@ -42,7 +52,7 @@ export default function AdminNoticesPage() {
   // 
   const currentLength = notices.length;
   if (currentLength - 1 < itemsPerPage && page * itemsPerPage < count) {
-    const { data } = await getNotices(page, itemsPerPage);
+    const { data } = await getNotices(page, itemsPerPage, category, sort);
     setNotices(data);
   }
 };
@@ -55,13 +65,20 @@ export default function AdminNoticesPage() {
   setMeetings(prev => prev.filter(m => m.id !== id));
   };
 
+  //for update functionality after changing the category of notices
+  const refetchNotices = async () => {
+    const { data, count } = await getNotices(page, itemsPerPage, category, sort);
+    setNotices(data);
+    setCount(count);
+  };
+
   useEffect(() => {
     setPage(Number(searchParams.get('page')) || 1);
   }, [searchParams]);
 
   useEffect(() => {
     async function fetchData() {
-      const { data, count } = await getNotices(page, itemsPerPage);
+      const { data, count } = await getNotices(page, itemsPerPage, category, sort);
       setNotices(data);
       setCount(count);
 
@@ -69,7 +86,7 @@ export default function AdminNoticesPage() {
       setMeetings(meetingsData);
     }
     fetchData();
-  }, [page]);
+  }, [page, category, sort]);
 
   const totalPages = Math.ceil(count / itemsPerPage);
 
@@ -77,7 +94,10 @@ export default function AdminNoticesPage() {
     <Flex justify="center" align="flex-start" gap="lg" mt="lg" px="md">
       {/* NOTICES */}
       <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }} align="flex-start">
-        <Text size="xl" fw={700}>Notices</Text>
+        <Flex justify="space-between" align="center" w="100%">
+          <Text size="xl" fw={700}>Notices</Text>
+          <FiltersNotices />
+        </Flex>
         <Flex direction="column" gap="sm" mt="sm" w="100%">
           {notices.length > 0 ? (
             notices.map((notice) => (
@@ -87,6 +107,7 @@ export default function AdminNoticesPage() {
                 role="admin"
                 onUpdate={(values) => handleUpdateNotice(notice.id, values)}
                 onDelete={() => handleDeleteNotice(notice.id)}
+                onAfterSave={refetchNotices}
               />
             ))
           ) : (
@@ -100,7 +121,7 @@ export default function AdminNoticesPage() {
                 fw={600}
                 c="blue"
                 style={{ cursor: 'pointer' }}
-                onClick={() => router.push(`?page=${page - 1}`)}
+                onClick={() => router.push(buildPageUrl(page - 1))}
               >
                 ← Previous
               </Text>
@@ -111,7 +132,7 @@ export default function AdminNoticesPage() {
                 fw={600}
                 c="blue"
                 style={{ cursor: 'pointer' }}
-                onClick={() => router.push(`?page=${page + 1}`)}
+                onClick={() => router.push(buildPageUrl(page + 1))}
               >
                 Next →
               </Text>
