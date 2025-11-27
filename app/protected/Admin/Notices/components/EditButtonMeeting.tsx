@@ -2,7 +2,12 @@
 import { Button } from '@mantine/core';
 import { Pencil } from 'lucide-react';
 
-export default function EditButtonMeeting({ id, onClick }: { id: string; onClick?: () => void }) {
+interface Props {
+  id: string;
+  onClick?: () => void; // 
+}
+
+export default function EditButtonMeeting({ id, onClick }: Props) {
   return (
     <Button
       variant="light"
