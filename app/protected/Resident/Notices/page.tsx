@@ -1,3 +1,7 @@
+'use client';
+
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Flex, Divider, Group, Text } from '@mantine/core';
 import NoticeCard from '@/components/NoticeCard';
 import MeetingCard from '@/components/MeetingCard';
@@ -5,50 +9,101 @@ import { getNotices, getMeetings } from './actions';
 import { Notice } from '@/types/Notice';
 import { Meeting } from '@/types/Meeting';
 
-export default async function ResidentNoticesPage() {
-  const notices: Notice[] = await getNotices();
-  const meetings: Meeting[] = await getMeetings();
+export default function ResidentNoticesPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const pageParam = searchParams.get('page');
+  const initialPage = Number(pageParam) || 1;
+
+  const [page, setPage] = useState(initialPage);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [count, setCount] = useState(0);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const itemsPerPage = 3;
+
+  useEffect(() => {
+    setPage(Number(searchParams.get('page')) || 1);
+  }, [searchParams]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data, count } = await getNotices(page, itemsPerPage);
+      setNotices(data);
+      setCount(count);
+
+      const meetingsData = await getMeetings();
+      setMeetings(meetingsData);
+    }
+    fetchData();
+  }, [page]);
+
+  const totalPages = Math.ceil(count / itemsPerPage);
 
   return (
-    <>
-      <Flex justify="center" align="flex-start" gap="lg" mt="lg" px="md">
-        <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }} align="flex-start">
-          <Text size="xl" fw={700}>
-            Notices
-          </Text>
+    <Flex justify="center" align="flex-start" gap="lg" mt="lg" px="md">
+      {/* NOTICES */}
+      <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }} align="flex-start">
+        <Text size="xl" fw={700}>Notices</Text>
+        <Flex direction="column" gap="sm" mt="sm" w="100%">
+          {notices.length > 0 ? (
+            notices.map((notice) => (
+              <NoticeCard
+                key={notice.id}
+                notice={notice}
+                role="resident"
+              />
+            ))
+          ) : (
+            <Text size="sm" c="dimmed">No notices yet.</Text>
+          )}
 
-          <Flex direction="column" gap="sm" mt="sm" w="100%">
-            {notices && notices.length > 0 ? (
-              notices.map((notice) => (
-                <NoticeCard key={notice.id} notice={notice} role="resident" />
-              ))
-            ) : (
-              <Text size="sm" c="dimmed">
-                No notices yet.
+          {/* Pagination */}
+          <Group justify="center" mt="md" gap="md">
+            {page > 1 && (
+              <Text
+                fw={600}
+                c="blue"
+                style={{ cursor: 'pointer' }}
+                onClick={() => router.push(`?page=${page - 1}`)}
+              >
+                ← Previous
               </Text>
             )}
-          </Flex>
-        </Group>
-
-        <Divider orientation="vertical" color="#e9ecef" />
-
-        <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }}>
-          <Text size="xl" fw={700}>
-            Meetings
-          </Text>
-          <Flex direction="column" gap="sm" mt="sm" w="100%">
-            {meetings && meetings.length > 0 ? (
-              meetings.map((meeting) => (
-                <MeetingCard key={meeting.id} meeting={meeting} role="resident" />
-              ))
-            ) : (
-              <Text size="sm" c="dimmed">
-                No meetings yet.
+            <Text>{page} / {totalPages}</Text>
+            {page < totalPages && (
+              <Text
+                fw={600}
+                c="blue"
+                style={{ cursor: 'pointer' }}
+                onClick={() => router.push(`?page=${page + 1}`)}
+              >
+                Next →
               </Text>
             )}
-          </Flex>
-        </Group>
-      </Flex>
-    </>
+          </Group>
+        </Flex>
+      </Group>
+
+      <Divider orientation="vertical" color="#e9ecef" />
+
+      {/* MEETINGS */}
+      <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }}>
+        <Text size="xl" fw={700}>Meetings</Text>
+        <Flex direction="column" gap="sm" mt="sm" w="100%">
+          {meetings.length > 0 ? (
+            meetings.map((meeting) => (
+              <MeetingCard
+                key={meeting.id}
+                meeting={meeting}
+                role="resident"
+              />
+            ))
+          ) : (
+            <Text size="sm" c="dimmed">No meetings yet.</Text>
+          )}
+        </Flex>
+      </Group>
+    </Flex>
   );
 }
