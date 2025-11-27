@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { useState, useTransition } from "react";
 import { createNotice } from "../actions";
+import { notifications } from "@mantine/notifications";
 
 export default function CreateNoticeForm() {
   const [isPending, startTransition] = useTransition();
@@ -49,7 +50,11 @@ export default function CreateNoticeForm() {
       try {
         await createNotice(formData);
 
-        setSuccess("Notice successfully created!");
+        notifications.show({
+          title: "Notice created",
+          message: "The notice was successfully created!",
+          color: "green",
+        });
         setTitle("");
         setContent("");
         setCategory("General");
