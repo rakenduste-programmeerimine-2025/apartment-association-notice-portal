@@ -4,7 +4,7 @@ import { useState } from 'react';
 import DeleteButtonMeeting from '@/app/protected/Admin/Notices/components/DeleteButtonMeeting';
 import EditButtonMeeting from '@/app/protected/Admin/Notices/components/EditButtonMeeting';
 import EditMeetingModal from '@/app/protected/Admin/Notices/components/EditMeetingModal';
-import { updateMeeting } from '@/app/protected/Admin/Notices/actions';
+import { updateMeeting, deleteMeeting } from '@/app/protected/Admin/Notices/actions';
 import { Meeting } from '@/types/Meeting';
 import { Card, Text, Badge, Group } from '@mantine/core';
 import { Calendar, Clock } from 'lucide-react';
@@ -12,9 +12,11 @@ import { Calendar, Clock } from 'lucide-react';
 interface Props {
   meeting: Meeting;
   role?: 'admin' | 'resident';
+  onUpdate?: (values: { title: string; description: string; meeting_date: string; duration: string }) => void; // <- добавлено
+  onDelete?: () => void; 
 }
 
-export default function MeetingCard({ meeting, role }: Props) {
+export default function MeetingCard({ meeting, role, onUpdate, onDelete }: Props) {
   const [opened, setOpened] = useState(false);
 
   const formattedDate = new Date(meeting.meeting_date).toLocaleDateString('en-GB', {
@@ -28,6 +30,7 @@ export default function MeetingCard({ meeting, role }: Props) {
     minute: '2-digit',
   });
 
+  
   const handleUpdate = async (values: {
     title: string;
     description: string;
@@ -35,6 +38,12 @@ export default function MeetingCard({ meeting, role }: Props) {
     duration: string;
   }) => {
     await updateMeeting(meeting.id, values);
+    onUpdate?.(values); 
+  };
+
+  const handleDelete = async () => {
+    await deleteMeeting(meeting.id);
+    onDelete?.(); 
   };
 
   return (
@@ -49,7 +58,7 @@ export default function MeetingCard({ meeting, role }: Props) {
               {formattedTime}
             </Badge>
           </Group>
-      
+
           <Badge color="blue" size="md" variant="dot">
             {meeting.duration}
           </Badge>
@@ -66,7 +75,7 @@ export default function MeetingCard({ meeting, role }: Props) {
         {role === 'admin' && (
           <Group justify="flex-end" mt="md">
             <EditButtonMeeting id={meeting.id} onClick={() => setOpened(true)} />
-            <DeleteButtonMeeting id={meeting.id} />
+            <DeleteButtonMeeting id={meeting.id} onClick={handleDelete} />
           </Group>
         )}
       </Card>
@@ -75,7 +84,7 @@ export default function MeetingCard({ meeting, role }: Props) {
         opened={opened}
         onClose={() => setOpened(false)}
         meeting={meeting}
-        onSubmit={handleUpdate}
+        onSubmit={handleUpdate} 
       />
     </>
   );

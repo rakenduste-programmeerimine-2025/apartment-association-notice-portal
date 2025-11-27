@@ -1,26 +1,26 @@
 'use client';
 import { useState } from 'react';
-import { Card, Text, Badge, Group, Button } from '@mantine/core';
+import { Card, Text, Badge, Group } from '@mantine/core';
 import type { Notice } from '@/types/Notice';
 import DeleteButtonNotice from '@/app/protected/Admin/Notices/components/DeleteButtonNotice';
 import EditButtonNotice from '@/app/protected/Admin/Notices/components/EditButtonNotice';
 import EditNoticeModal from '@/app/protected/Admin/Notices/components/EditNoticeModal';
-import { updateNotice } from '@/app/protected/Admin/Notices/actions';
+import { updateNotice, deleteNotice } from '@/app/protected/Admin/Notices/actions';
 
 interface Props {
   notice: Notice;
   role?: 'admin' | 'resident';
+  onUpdate?: (values: { title: string; content: string; category: string }) => void; // 
+  onDelete?: () => void; 
 }
 
-export default function NoticeCard({ notice, role }: Props) {
+export default function NoticeCard({ notice, role, onUpdate, onDelete }: Props) {
   const [opened, setOpened] = useState(false);
 
   const date = new Date(notice.created_at);
   const formattedDate = `${date.getUTCDate().toString().padStart(2, '0')} ${date.toLocaleString(
     'en-GB',
-    {
-      month: 'short',
-    }
+    { month: 'short' }
   )} ${date.getUTCFullYear()}`;
 
   const formattedTime = `${date.getUTCHours().toString().padStart(2, '0')}:${date
@@ -28,18 +28,24 @@ export default function NoticeCard({ notice, role }: Props) {
     .toString()
     .padStart(2, '0')}`;
 
-  //defining the color of badge based on category
   const badgeColor =
     notice.category === 'General'
       ? 'green'
       : notice.category === 'Maintenance'
-        ? 'yellow'
-        : notice.category === 'Safety'
-          ? 'blue'
-          : 'gray';
+      ? 'yellow'
+      : notice.category === 'Safety'
+      ? 'blue'
+      : 'gray';
+
 
   const handleUpdate = async (values: { title: string; content: string; category: string }) => {
-    await updateNotice(notice.id, values);
+    await updateNotice(notice.id, values); 
+    onUpdate?.(values); 
+  };
+
+  const handleDelete = async () => {
+    await deleteNotice(notice.id);
+    onDelete?.(); 
   };
 
   return (
@@ -50,7 +56,7 @@ export default function NoticeCard({ notice, role }: Props) {
             {notice.category}
           </Badge>
           <Text size="xs" c="gray">
-            Created at: {formattedDate}, {formattedTime},
+            Created at: {formattedDate}, {formattedTime}
           </Text>
         </Group>
 
@@ -65,7 +71,7 @@ export default function NoticeCard({ notice, role }: Props) {
         {role === 'admin' && (
           <Group justify="flex-end" mt="md">
             <EditButtonNotice id={notice.id} onClick={() => setOpened(true)} />
-            <DeleteButtonNotice id={notice.id} />
+            <DeleteButtonNotice id={notice.id} onClick={handleDelete} />
           </Group>
         )}
       </Card>
@@ -74,7 +80,7 @@ export default function NoticeCard({ notice, role }: Props) {
         opened={opened}
         onClose={() => setOpened(false)}
         notice={notice}
-        onSubmit={handleUpdate}
+        onSubmit={handleUpdate} 
       />
     </>
   );
