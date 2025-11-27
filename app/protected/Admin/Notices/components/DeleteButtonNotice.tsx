@@ -4,7 +4,12 @@ import { Trash } from 'lucide-react';
 import { deleteNotice } from '@/app/protected/Admin/Notices/actions';
 import { useTransition } from 'react';
 
-export default function DeleteButtonNotice({ id }: { id: string }) {
+interface Props {
+  id: string;
+  onClick?: () => void; // 
+}
+
+export default function DeleteButtonNotice({ id, onClick }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = async () => {
@@ -12,6 +17,7 @@ export default function DeleteButtonNotice({ id }: { id: string }) {
     if (!confirmed) return;
     startTransition(async () => {
       await deleteNotice(id);
+      onClick?.(); 
     });
   };
 

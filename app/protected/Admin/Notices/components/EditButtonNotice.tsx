@@ -2,7 +2,12 @@
 import { Button } from '@mantine/core';
 import { Pencil } from 'lucide-react';
 
-export default function EditButtonNotice({ id, onClick }: { id: string; onClick?: () => void }) {
+interface Props {
+  id: string;
+  onClick?: () => void; // lisatud
+}
+
+export default function EditButtonNotice({ id, onClick }: Props) {
   return (
     <Button
       variant="light"
@@ -10,7 +15,7 @@ export default function EditButtonNotice({ id, onClick }: { id: string; onClick?
       radius="xl"
       size="compact-sm"
       leftSection={<Pencil size={14} />}
-      onClick={onClick}
+      onClick={onClick} 
     >
       Edit
     </Button>
