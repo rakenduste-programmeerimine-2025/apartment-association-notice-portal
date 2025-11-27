@@ -107,14 +107,12 @@ export default function CreateMeetingForm() {
           };
 
           const message = map[err.message] ?? 'Unexpected server error.';
-          setError(message);
           notifications.show({
             title: 'Error',
             message: message,
             color: 'red',
           });
         } else {
-          setError('Unexpected server error.');
           notifications.show({
             title: 'Error',
             message: 'An unexpected error occurred. Please try again later.',
