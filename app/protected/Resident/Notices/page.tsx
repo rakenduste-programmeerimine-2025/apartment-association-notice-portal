@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Flex, Divider, Group, Text } from '@mantine/core';
+import { Flex, Divider, Group, Text, Badge } from '@mantine/core';
 import NoticeCard from '@/components/NoticeCard';
 import MeetingCard from '@/components/MeetingCard';
 import { getNotices, getMeetings } from './actions';
@@ -22,10 +22,10 @@ export default function ResidentNoticesPage() {
 
   const buildPageUrl = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(newPage));
+    params.set('page', String(newPage));
     return `?${params.toString()}`;
   };
-  
+
   const [page, setPage] = useState(initialPage);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [count, setCount] = useState(0);
@@ -55,20 +55,39 @@ export default function ResidentNoticesPage() {
       {/* NOTICES */}
       <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }} align="flex-start">
         <Flex justify="space-between" align="center" w="100%">
-          <Text size="xl" fw={700}>Notices</Text>
+          <Text size="xl" fw={700}>
+            Notices
+          </Text>
           <FiltersNotices />
         </Flex>
-        <Flex direction="column" gap="sm" mt="sm" w="100%">
+        <Flex gap="xs" mt={-4} justify="flex-end" align="center" w="100%">
+          <Badge
+            color="blue"
+            variant="light"
+            radius="xl"
+            size="sm"
+            styles={{ root: { paddingLeft: 12, paddingRight: 12 } }}
+          >
+            {category === '' ? 'All' : category}
+          </Badge>
+          <Badge
+            color="blue"
+            variant="light"
+            radius="xl"
+            size="sm"
+            styles={{ root: { paddingLeft: 12, paddingRight: 12 } }}
+          >
+            {sort === 'newest' ? 'Newest' : 'Oldest'}
+          </Badge>
+        </Flex>
+
+        <Flex direction="column" gap="sm" w="100%">
           {notices.length > 0 ? (
-            notices.map((notice) => (
-              <NoticeCard
-                key={notice.id}
-                notice={notice}
-                role="resident"
-              />
-            ))
+            notices.map((notice) => <NoticeCard key={notice.id} notice={notice} role="resident" />)
           ) : (
-            <Text size="sm" c="dimmed">No notices yet.</Text>
+            <Text size="sm" c="dimmed">
+              No notices yet.
+            </Text>
           )}
 
           {/* Pagination */}
@@ -83,7 +102,9 @@ export default function ResidentNoticesPage() {
                 ← Previous
               </Text>
             )}
-            <Text>{page} / {totalPages}</Text>
+            <Text>
+              {page} / {totalPages}
+            </Text>
             {page < totalPages && (
               <Text
                 fw={600}
@@ -102,18 +123,18 @@ export default function ResidentNoticesPage() {
 
       {/* MEETINGS */}
       <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }}>
-        <Text size="xl" fw={700}>Meetings</Text>
+        <Text size="xl" fw={700}>
+          Meetings
+        </Text>
         <Flex direction="column" gap="sm" mt="sm" w="100%">
           {meetings.length > 0 ? (
             meetings.map((meeting) => (
-              <MeetingCard
-                key={meeting.id}
-                meeting={meeting}
-                role="resident"
-              />
+              <MeetingCard key={meeting.id} meeting={meeting} role="resident" />
             ))
           ) : (
-            <Text size="sm" c="dimmed">No meetings yet.</Text>
+            <Text size="sm" c="dimmed">
+              No meetings yet.
+            </Text>
           )}
         </Flex>
       </Group>
