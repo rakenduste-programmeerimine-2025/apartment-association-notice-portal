@@ -1,69 +1,48 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, Text, Group, Stack, Loader, Center, ScrollArea, Flex, Badge } from '@mantine/core';
 import { Button } from '@/components/ui/button';
-import type { CommunityId } from '@/types/community';
 import FiltersWorries from '@/components/FiltersWorries';
-
-type Worry = {
-  id: string;
-  title: string | null;
-  content: string | null;
-  created_at: string;
-  created_by: string | null;
-  community_id: CommunityId;
-};
-
-const supabase = createClient();
-
-// 🔹 Read community_id from env so it's configurable per developer / environment
-const COMMUNITY_ID: CommunityId | '' =
-  (process.env.NEXT_PUBLIC_COMMUNITY_ID as CommunityId | undefined) ?? '';
+import { getWorries, deleteWorry, type Worry } from './actions';
 
 export default function AdminWorriesPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const pageParam = searchParams.get('page');
+  const initialPage = Number(pageParam) || 1;
   const sort = searchParams.get('sort') || 'newest';
 
+  const [page, setPage] = useState(initialPage);
   const [worries, setWorries] = useState<Worry[]>([]);
+  const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
+  const itemsPerPage = 3;
 
-  useEffect(() => {
-    const fetchWorries = async () => {
-      setLoading(true);
+  const buildPageUrl = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(newPage));
+    return `?${params.toString()}`;
+  };
 
-      try {
-        const query = supabase
-          .from('worries')
-          .select('id, title, content, created_at, created_by, community_id')
-          .order('created_at', { ascending: sort === 'oldest' });
-
-        // Kui COMMUNITY_ID on seadistatud, filtreeri selle järgi
-        if (COMMUNITY_ID) {
-          query.eq('community_id', COMMUNITY_ID);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error('Error fetching worries:', error.message);
-          setWorries([]);
-        } else {
-          setWorries((data || []) as Worry[]);
-        }
-      } catch (err) {
-        console.error(err);
-        setWorries([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWorries();
-  }, [sort]);
+  const fetchWorries = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, count } = await getWorries(page, itemsPerPage, sort as 'newest' | 'oldest');
+      setWorries(data);
+      setCount(count);
+    } catch (error) {
+      console.error('Error fetching worries:', error);
+      setWorries([]);
+      setCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, sort, itemsPerPage]);
 
   const handleDelete = async (id: string) => {
     const confirmed = window.confirm(
@@ -73,16 +52,35 @@ export default function AdminWorriesPage() {
 
     setDeletingId(id);
 
-    const { error } = await supabase.from('worries').delete().eq('id', id);
+    try {
+      await deleteWorry(id);
+      
+      await fetchWorries();
 
-    if (error) {
-      console.error('Error deleting worry:', error.message);
-    } else {
-      setWorries((prev) => prev.filter((worry) => worry.id !== id));
+      if (worries.length === 1 && page > 1) {
+        const newPage = page - 1;
+        setPage(newPage);
+        router.push(buildPageUrl(newPage));
+      }
+
+    } catch (error: unknown) {
+      console.error('Error deleting worry:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to delete worry: ${errorMessage}`);
+    } finally {
+      setDeletingId(null);
     }
-
-    setDeletingId(null);
   };
+
+  useEffect(() => {
+    setPage(Number(searchParams.get('page')) || 1);
+  }, [searchParams]);
+
+  useEffect(() => {
+    fetchWorries();
+  }, [fetchWorries]);
+
+  const totalPages = Math.ceil(count / itemsPerPage);
 
   if (loading) {
     return (
@@ -101,6 +99,7 @@ export default function AdminWorriesPage() {
           </Text>
           <FiltersWorries />
         </Flex>
+        
         <Flex gap="xs" mt={-4} justify="flex-end" align="center" w="100%">
           <Badge
             color="blue"
@@ -153,6 +152,35 @@ export default function AdminWorriesPage() {
             )}
           </Card>
         ))}
+
+        {/* Pagination */}
+        {worries.length > 0 && (
+          <Group justify="center" mt="md" gap="md">
+            {page > 1 && (
+              <Text
+                fw={600}
+                c="blue"
+                style={{ cursor: 'pointer' }}
+                onClick={() => router.push(buildPageUrl(page - 1))}
+              >
+                ← Previous
+              </Text>
+            )}
+            <Text>
+              {page} / {totalPages}
+            </Text>
+            {page < totalPages && (
+              <Text
+                fw={600}
+                c="blue"
+                style={{ cursor: 'pointer' }}
+                onClick={() => router.push(buildPageUrl(page + 1))}
+              >
+                Next →
+              </Text>
+            )}
+          </Group>
+        )}
       </Stack>
     </ScrollArea>
   );
