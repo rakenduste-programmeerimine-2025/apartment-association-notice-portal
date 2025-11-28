@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Flex, Divider, Group, Text } from '@mantine/core';
+import { Flex, Divider, Group, Text, Badge } from '@mantine/core';
 import NoticeCard from '@/components/NoticeCard';
 import MeetingCard from '@/components/MeetingCard';
 import { getNotices, getMeetings } from './actions';
@@ -24,45 +24,51 @@ export default function AdminNoticesPage() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [count, setCount] = useState(0);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const itemsPerPage = 3;//sina muuta voime kus palju lehel naitame teadet
+  const itemsPerPage = 3; //sina muuta voime kus palju lehel naitame teadet
 
   const buildPageUrl = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(newPage));
+    params.set('page', String(newPage));
     return `?${params.toString()}`;
   };
-  
-  const handleUpdateNotice = (id: string, values: { title: string; content: string; category: string }) => {
-    setNotices(prev => prev.map(n => n.id === id ? { ...n, ...values } : n));
+
+  const handleUpdateNotice = (
+    id: string,
+    values: { title: string; content: string; category: string }
+  ) => {
+    setNotices((prev) => prev.map((n) => (n.id === id ? { ...n, ...values } : n)));
   };
 
-   const handleDeleteNotice = async (id: string) => {
-  setNotices(prev => prev.filter(n => n.id !== id));
-  setCount(prev => prev - 1);
+  const handleDeleteNotice = async (id: string) => {
+    setNotices((prev) => prev.filter((n) => n.id !== id));
+    setCount((prev) => prev - 1);
 
-  if (notices.length === 1 && page > 1) {
-    const newPage = page - 1;
-    setPage(newPage);
-    router.push(buildPageUrl(newPage));
-    const { data } = await getNotices(newPage, itemsPerPage, category, sort);
-    setNotices(data);
-    return;
-  }
+    if (notices.length === 1 && page > 1) {
+      const newPage = page - 1;
+      setPage(newPage);
+      router.push(buildPageUrl(newPage));
+      const { data } = await getNotices(newPage, itemsPerPage, category, sort);
+      setNotices(data);
+      return;
+    }
 
-  // 
-  const currentLength = notices.length;
-  if (currentLength - 1 < itemsPerPage && page * itemsPerPage < count) {
-    const { data } = await getNotices(page, itemsPerPage, category, sort);
-    setNotices(data);
-  }
-};
+    //
+    const currentLength = notices.length;
+    if (currentLength - 1 < itemsPerPage && page * itemsPerPage < count) {
+      const { data } = await getNotices(page, itemsPerPage, category, sort);
+      setNotices(data);
+    }
+  };
 
-  const handleUpdateMeeting = (id: string, values: { title: string; description: string; meeting_date: string; duration: string }) => {
-  setMeetings(prev => prev.map(m => m.id === id ? { ...m, ...values } : m));
-};
+  const handleUpdateMeeting = (
+    id: string,
+    values: { title: string; description: string; meeting_date: string; duration: string }
+  ) => {
+    setMeetings((prev) => prev.map((m) => (m.id === id ? { ...m, ...values } : m)));
+  };
 
   const handleDeleteMeeting = (id: string) => {
-  setMeetings(prev => prev.filter(m => m.id !== id));
+    setMeetings((prev) => prev.filter((m) => m.id !== id));
   };
 
   //for update functionality after changing the category of notices
@@ -95,10 +101,33 @@ export default function AdminNoticesPage() {
       {/* NOTICES */}
       <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }} align="flex-start">
         <Flex justify="space-between" align="center" w="100%">
-          <Text size="xl" fw={700}>Notices</Text>
+          <Text size="xl" fw={700}>
+            Notices
+          </Text>
           <FiltersNotices />
         </Flex>
-        <Flex direction="column" gap="sm" mt="sm" w="100%">
+        <Flex gap="xs" mt={-4} justify="flex-end" align="center" w="100%">
+          <Badge
+            color="blue"
+            variant="light"
+            radius="xl"
+            size="sm"
+            styles={{ root: { paddingLeft: 12, paddingRight: 12 } }}
+          >
+            {category === '' ? 'All' : category}
+          </Badge>
+          <Badge
+            color="blue"
+            variant="light"
+            radius="xl"
+            size="sm"
+            styles={{ root: { paddingLeft: 12, paddingRight: 12 } }}
+          >
+            {sort === 'newest' ? 'Newest' : 'Oldest'}
+          </Badge>
+        </Flex>
+
+        <Flex direction="column" gap="sm" w="100%">
           {notices.length > 0 ? (
             notices.map((notice) => (
               <NoticeCard
@@ -111,7 +140,9 @@ export default function AdminNoticesPage() {
               />
             ))
           ) : (
-            <Text size="sm" c="dimmed">No notices yet.</Text>
+            <Text size="sm" c="dimmed">
+              No notices yet.
+            </Text>
           )}
 
           {/* Pagination */}
@@ -126,7 +157,9 @@ export default function AdminNoticesPage() {
                 ← Previous
               </Text>
             )}
-            <Text>{page} / {totalPages}</Text>
+            <Text>
+              {page} / {totalPages}
+            </Text>
             {page < totalPages && (
               <Text
                 fw={600}
@@ -145,21 +178,25 @@ export default function AdminNoticesPage() {
 
       {/* MEETINGS */}
       <Group style={{ flex: 1, minWidth: 320, maxWidth: 500 }}>
-        <Text size="xl" fw={700}>Meetings</Text>
+        <Text size="xl" fw={700}>
+          Meetings
+        </Text>
         <Flex direction="column" gap="sm" mt="sm" w="100%">
           {meetings.length > 0 ? (
-          meetings.map((meeting) => (
-            <MeetingCard
-              key={meeting.id}
-              meeting={meeting}
-              role="admin"
-              onUpdate={(values) => handleUpdateMeeting(meeting.id, values)}
-              onDelete={() => handleDeleteMeeting(meeting.id)}
-            />
-          ))
-        ) : (
-          <Text size="sm" c="dimmed">No meetings yet.</Text>
-        )}
+            meetings.map((meeting) => (
+              <MeetingCard
+                key={meeting.id}
+                meeting={meeting}
+                role="admin"
+                onUpdate={(values) => handleUpdateMeeting(meeting.id, values)}
+                onDelete={() => handleDeleteMeeting(meeting.id)}
+              />
+            ))
+          ) : (
+            <Text size="sm" c="dimmed">
+              No meetings yet.
+            </Text>
+          )}
         </Flex>
       </Group>
     </Flex>
