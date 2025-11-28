@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Card, Text, Stack, Loader, Center, ScrollArea, Badge, Flex } from '@mantine/core';
+import { Card, Text, Stack, Loader, Center, ScrollArea, Badge, Flex, Group } from '@mantine/core';
 import FiltersWorries from '@/components/FiltersWorries';
 
 type Worry = {
@@ -11,38 +11,91 @@ type Worry = {
   title: string | null;
   content: string | null;
   created_at: string;
-  // created_by ja community_id on olemas tabelis, aga kasutaja vaates ei pea neid ilmtingimata näitama
 };
 
 const supabase = createClient();
 
 export default function ResidentWorriesPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const pageParam = searchParams.get('page');
+  const initialPage = Number(pageParam) || 1;
   const sort = searchParams.get('sort') || 'newest';
 
+  const [page, setPage] = useState(initialPage);
   const [worries, setWorries] = useState<Worry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
+  
+  const itemsPerPage = 3;
+
+  const buildPageUrl = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(newPage));
+    return `?${params.toString()}`;
+  };
 
   useEffect(() => {
     const fetchWorries = async () => {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from('worries')
-        .select('id, title, content, created_at')
-        .order('created_at', { ascending: sort === 'oldest' });
-      if (error) {
-        console.error('Error fetching resident worries:', error.message);
-        setWorries([]);
-      } else {
-        setWorries((data || []) as Worry[]);
-      }
+      try {
+        const from = (page - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
 
-      setLoading(false);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setWorries([]);
+          setCount(0);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('users')
+          .select('community_id')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.community_id) {
+          setWorries([]);
+          setCount(0);
+          return;
+        }
+
+        const { data, error, count } = await supabase
+          .from('worries')
+          .select('id, title, content, created_at', { count: 'exact' })
+          .eq('community_id', profile.community_id) 
+          .order('created_at', { ascending: sort === 'oldest' })
+          .range(from, to);
+
+        if (error) {
+          console.error('Error fetching resident worries:', error.message);
+          setWorries([]);
+          setCount(0);
+        } else {
+          setWorries((data || []) as Worry[]);
+          setCount(count || 0);
+        }
+      } catch (err) {
+        console.error(err);
+        setWorries([]);
+        setCount(0);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchWorries();
-  }, [sort]);
+  }, [sort, page]);
+
+  useEffect(() => {
+    setPage(Number(searchParams.get('page')) || 1);
+  }, [searchParams]);
+
+  const totalPages = Math.ceil(count / itemsPerPage);
 
   if (loading) {
     return (
@@ -94,6 +147,35 @@ export default function ResidentWorriesPage() {
             </Text>
           </Card>
         ))}
+
+        {/* Pagination */}
+        {worries.length > 0 && (
+          <Group justify="center" mt="md" gap="md">
+            {page > 1 && (
+              <Text
+                fw={600}
+                c="blue"
+                style={{ cursor: 'pointer' }}
+                onClick={() => router.push(buildPageUrl(page - 1))}
+              >
+                ← Previous
+              </Text>
+            )}
+            <Text>
+              {page} / {totalPages}
+            </Text>
+            {page < totalPages && (
+              <Text
+                fw={600}
+                c="blue"
+                style={{ cursor: 'pointer' }}
+                onClick={() => router.push(buildPageUrl(page + 1))}
+              >
+                Next →
+              </Text>
+            )}
+          </Group>
+        )}
       </Stack>
     </ScrollArea>
   );
