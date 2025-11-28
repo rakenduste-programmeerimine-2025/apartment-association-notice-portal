@@ -1,15 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import {
-  Card,
-  Text,
-  Stack,
-  Loader,
-  Center,
-  ScrollArea,
-} from '@mantine/core';
+import { Card, Text, Stack, Loader, Center, ScrollArea, Badge, Flex } from '@mantine/core';
+import FiltersWorries from '@/components/FiltersWorries';
 
 type Worry = {
   id: string;
@@ -22,6 +17,9 @@ type Worry = {
 const supabase = createClient();
 
 export default function ResidentWorriesPage() {
+  const searchParams = useSearchParams();
+  const sort = searchParams.get('sort') || 'newest';
+
   const [worries, setWorries] = useState<Worry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,8 +30,7 @@ export default function ResidentWorriesPage() {
       const { data, error } = await supabase
         .from('worries')
         .select('id, title, content, created_at')
-        .order('created_at', { ascending: false });
-
+        .order('created_at', { ascending: sort === 'oldest' });
       if (error) {
         console.error('Error fetching resident worries:', error.message);
         setWorries([]);
@@ -45,7 +42,7 @@ export default function ResidentWorriesPage() {
     };
 
     fetchWorries();
-  }, []);
+  }, [sort]);
 
   if (loading) {
     return (
@@ -58,9 +55,23 @@ export default function ResidentWorriesPage() {
   return (
     <ScrollArea style={{ maxHeight: 'calc(100vh - 80px)' }} px="md" py="lg">
       <Stack gap="md">
-        <Text fw={700} size="xl">
-          Worries
-        </Text>
+        <Flex justify="space-between" align="center" w="100%">
+          <Text size="xl" fw={700}>
+            Worries
+          </Text>
+          <FiltersWorries />
+        </Flex>
+        <Flex gap="xs" mt={-4} justify="flex-end" align="center" w="100%">
+          <Badge
+            color="blue"
+            variant="light"
+            radius="xl"
+            size="sm"
+            styles={{ root: { paddingLeft: 12, paddingRight: 12 } }}
+          >
+            {sort === 'newest' ? 'Newest' : 'Oldest'}
+          </Badge>
+        </Flex>
 
         {worries.length === 0 && (
           <Text c="dimmed" size="sm">
