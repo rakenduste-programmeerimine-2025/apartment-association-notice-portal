@@ -2,19 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import {
-  Card,
-  Text,
-  Group,
-  Stack,
-  Loader,
-  Center,
-  ScrollArea,
-  Badge,
-  Avatar,
-} from '@mantine/core';
+import { Card, Text, Group, Stack, Loader, Center, ScrollArea, Badge, Avatar } from '@mantine/core';
 import { Button } from '@/components/ui/button';
 import type { CommunityId } from '@/types/community';
+import { removeResidentAction } from './actions';
 
 type User = {
   id: string;
@@ -45,11 +36,9 @@ export default function AdminResidentsPage() {
       try {
         let query = supabase
           .from('users')
-          .select(
-            'id, email, full_name, role, community_id, flat_number, created_at, status',
-          )
+          .select('id, email, full_name, role, community_id, flat_number, created_at, status')
           .order('created_at', { ascending: false });
-//  If COMMUNITY_ID is set, filter by it
+        //  If COMMUNITY_ID is set, filter by it
         if (COMMUNITY_ID) {
           query = query.eq('community_id', COMMUNITY_ID);
         }
@@ -73,44 +62,31 @@ export default function AdminResidentsPage() {
     fetchUsers();
   }, []);
 
-  const updateStatus = async (
-    id: string,
-    status: 'approved' | 'rejected',
-  ) => {
+  const updateStatus = async (id: string, status: 'approved') => {
     setUpdatingId(id);
 
-    const { error } = await supabase
-      .from('users')
-      .update({ status })
-      .eq('id', id);
+    const { error } = await supabase.from('users').update({ status }).eq('id', id);
 
     if (error) {
       console.error('Error updating user status:', error.message);
     } else {
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === id ? { ...user, status } : user,
-        ),
-      );
+      setUsers((prev) => prev.map((user) => (user.id === id ? { ...user, status } : user)));
     }
 
     setUpdatingId(null);
   };
 
   const removeResident = async (id: string) => {
-    const confirmed = window.confirm(
-      'Are you sure you want to remove this resident?',
-    );
+    const confirmed = window.confirm('Are you sure you want to remove this resident?');
     if (!confirmed) return;
 
     setUpdatingId(id);
 
-    const { error } = await supabase.from('users').delete().eq('id', id);
-
-    if (error) {
-      console.error('Error removing resident:', error.message);
-    } else {
-      setUsers((prev) => prev.filter((user) => user.id !== id));
+    try {
+      await removeResidentAction(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch (err) {
+      console.error(err);
     }
 
     setUpdatingId(null);
@@ -125,12 +101,8 @@ export default function AdminResidentsPage() {
   }
 
   const admins = users.filter((u) => u.role === 'admin');
-  const pendingResidents = users.filter(
-    (u) => u.role === 'resident' && u.status === 'pending',
-  );
-  const approvedResidents = users.filter(
-    (u) => u.role === 'resident' && u.status === 'approved',
-  );
+  const pendingResidents = users.filter((u) => u.role === 'resident' && u.status === 'pending');
+  const approvedResidents = users.filter((u) => u.role === 'resident' && u.status === 'approved');
 
   const initials = (fullName: string | null) =>
     fullName
@@ -141,31 +113,40 @@ export default function AdminResidentsPage() {
           .toUpperCase()
       : 'U';
 
-  return (//scrollarea(kõrgus) is muudetud selleks et scrolimine yldse töötaks,nyyd töötab
-     <ScrollArea h="100vh" px="md" py="lg"> 
+  return (
+    //scrollarea(kõrgus) is muudetud selleks et scrolimine yldse töötaks,nyyd töötab
+    <ScrollArea h="100vh" px="md" py="lg">
       <Stack gap="xl">
-
         {/* Pending join requests */}
         <Stack gap="md">
-          <Text fw={700} size="xl">Pending requests</Text>
+          <Text fw={700} size="xl">
+            Pending requests
+          </Text>
 
           {pendingResidents.length === 0 && (
-            <Text c="dimmed" size="sm">No pending join requests.</Text>
+            <Text c="dimmed" size="sm">
+              No pending join requests.
+            </Text>
           )}
 
           {pendingResidents.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-
                 {/* Avatar + info */}
                 <Group align="center" gap="md">
-                  <Avatar color="gray" radius="xl">{initials(user.full_name)}</Avatar>
+                  <Avatar color="gray" radius="xl">
+                    {initials(user.full_name)}
+                  </Avatar>
                   {/* värv sinna saab muuta  */}
                   <Stack gap={2}>
                     <Text fw={600}>{user.full_name || 'Unnamed resident'}</Text>
-                    <Text size="sm" c="dimmed">{user.email}</Text>
+                    <Text size="sm" c="dimmed">
+                      {user.email}
+                    </Text>
                     {user.flat_number && (
-                      <Text size="sm" c="dimmed">Flat: {user.flat_number}</Text>
+                      <Text size="sm" c="dimmed">
+                        Flat: {user.flat_number}
+                      </Text>
                     )}
                     <Text size="xs" c="dimmed">
                       Requested at: {new Date(user.created_at).toLocaleString()}
@@ -186,7 +167,7 @@ export default function AdminResidentsPage() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => updateStatus(user.id, 'rejected')}
+                    onClick={() => removeResident(user.id)}
                     disabled={updatingId === user.id}
                   >
                     Reject
@@ -199,30 +180,41 @@ export default function AdminResidentsPage() {
 
         {/* Approved residents */}
         <Stack gap="md">
-          <Text fw={700} size="xl">Residents</Text>
+          <Text fw={700} size="xl">
+            Residents
+          </Text>
 
           {approvedResidents.length === 0 && (
-            <Text c="dimmed" size="sm">No approved residents yet.</Text>
+            <Text c="dimmed" size="sm">
+              No approved residents yet.
+            </Text>
           )}
 
           {approvedResidents.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-
                 {/* Avatar + info */}
                 <Group align="center" gap="md">
-                  <Avatar color="blue" radius="xl">{initials(user.full_name)}</Avatar>
+                  <Avatar color="blue" radius="xl">
+                    {initials(user.full_name)}
+                  </Avatar>
 
                   <Stack gap={2}>
                     <Group gap="xs">
                       <Text fw={600}>{user.full_name || 'Unnamed resident'}</Text>
-                      <Badge size="xs" variant="outline">Resident</Badge>
+                      <Badge size="xs" variant="outline">
+                        Resident
+                      </Badge>
                     </Group>
 
-                    <Text size="sm" c="dimmed">{user.email}</Text>
+                    <Text size="sm" c="dimmed">
+                      {user.email}
+                    </Text>
 
                     {user.flat_number && (
-                      <Text size="sm" c="dimmed">Flat: {user.flat_number}</Text>
+                      <Text size="sm" c="dimmed">
+                        Flat: {user.flat_number}
+                      </Text>
                     )}
 
                     <Text size="xs" c="dimmed">
@@ -246,16 +238,19 @@ export default function AdminResidentsPage() {
 
         {/* Admins */}
         <Stack gap="md">
-          <Text fw={700} size="xl">Admins</Text>
+          <Text fw={700} size="xl">
+            Admins
+          </Text>
 
           {admins.length === 0 && (
-            <Text c="dimmed" size="sm">No admins found.</Text>
+            <Text c="dimmed" size="sm">
+              No admins found.
+            </Text>
           )}
 
           {admins.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-
                 <Group align="center" gap="md">
                   <Avatar
                     radius="xl"
@@ -263,7 +258,7 @@ export default function AdminResidentsPage() {
                     styles={{
                       root: {
                         fontWeight: 700,
-                        border: "2px solid #2B6CB0",
+                        border: '2px solid #2B6CB0',
                       },
                     }}
                   >
@@ -273,17 +268,20 @@ export default function AdminResidentsPage() {
                   <Stack gap={2}>
                     <Group gap="xs">
                       <Text fw={600}>{user.full_name || 'Unnamed admin'}</Text>
-                      <Badge size="xs" variant="outline">Admin</Badge>
+                      <Badge size="xs" variant="outline">
+                        Admin
+                      </Badge>
                     </Group>
 
-                    <Text size="sm" c="dimmed">{user.email}</Text>
+                    <Text size="sm" c="dimmed">
+                      {user.email}
+                    </Text>
 
                     <Text size="xs" c="dimmed">
                       Created at: {new Date(user.created_at).toLocaleString()}
                     </Text>
                   </Stack>
                 </Group>
-
               </Group>
             </Card>
           ))}
