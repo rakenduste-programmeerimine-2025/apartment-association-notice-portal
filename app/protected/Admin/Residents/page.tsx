@@ -11,6 +11,7 @@ import {
   Center,
   ScrollArea,
   Badge,
+  Avatar,
 } from '@mantine/core';
 import { Button } from '@/components/ui/button';
 import type { CommunityId } from '@/types/community';
@@ -48,8 +49,7 @@ export default function AdminResidentsPage() {
             'id, email, full_name, role, community_id, flat_number, created_at, status',
           )
           .order('created_at', { ascending: false });
-
-        // If COMMUNITY_ID is set, filter by it
+//  If COMMUNITY_ID is set, filter by it
         if (COMMUNITY_ID) {
           query = query.eq('community_id', COMMUNITY_ID);
         }
@@ -132,40 +132,46 @@ export default function AdminResidentsPage() {
     (u) => u.role === 'resident' && u.status === 'approved',
   );
 
-  return (
-    <ScrollArea style={{ maxHeight: 'calc(100vh - 80px)' }} px="md" py="lg">
+  const initials = (fullName: string | null) =>
+    fullName
+      ? fullName
+          .split(' ')
+          .map((p) => p[0])
+          .join('')
+          .toUpperCase()
+      : 'U';
+
+  return (//scrollarea(kõrgus) is muudetud selleks et scrolimine yldse töötaks,nyyd töötab
+     <ScrollArea h="100vh" px="md" py="lg"> 
       <Stack gap="xl">
+
         {/* Pending join requests */}
         <Stack gap="md">
-          <Text fw={700} size="xl">
-            Pending requests
-          </Text>
+          <Text fw={700} size="xl">Pending requests</Text>
 
           {pendingResidents.length === 0 && (
-            <Text c="dimmed" size="sm">
-              No pending join requests.
-            </Text>
+            <Text c="dimmed" size="sm">No pending join requests.</Text>
           )}
 
           {pendingResidents.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-                <Stack gap={2}>
-                  <Text fw={600}>
-                    {user.full_name || 'Unnamed resident'}
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    {user.email}
-                  </Text>
-                  {user.flat_number && (
-                    <Text size="sm" c="dimmed">
-                      Flat: {user.flat_number}
+
+                {/* Avatar + info */}
+                <Group align="center" gap="md">
+                  <Avatar color="gray" radius="xl">{initials(user.full_name)}</Avatar>
+                  {/* värv sinna saab muuta  */}
+                  <Stack gap={2}>
+                    <Text fw={600}>{user.full_name || 'Unnamed resident'}</Text>
+                    <Text size="sm" c="dimmed">{user.email}</Text>
+                    {user.flat_number && (
+                      <Text size="sm" c="dimmed">Flat: {user.flat_number}</Text>
+                    )}
+                    <Text size="xs" c="dimmed">
+                      Requested at: {new Date(user.created_at).toLocaleString()}
                     </Text>
-                  )}
-                  <Text size="xs" c="dimmed">
-                    Requested at: {new Date(user.created_at).toLocaleString()}
-                  </Text>
-                </Stack>
+                  </Stack>
+                </Group>
 
                 <Group gap="sm">
                   <Button
@@ -176,6 +182,7 @@ export default function AdminResidentsPage() {
                   >
                     Approve
                   </Button>
+
                   <Button
                     variant="destructive"
                     size="sm"
@@ -192,44 +199,37 @@ export default function AdminResidentsPage() {
 
         {/* Approved residents */}
         <Stack gap="md">
-          <Text fw={700} size="xl">
-            Residents
-          </Text>
+          <Text fw={700} size="xl">Residents</Text>
 
           {approvedResidents.length === 0 && (
-            <Text c="dimmed" size="sm">
-              No approved residents yet.
-            </Text>
+            <Text c="dimmed" size="sm">No approved residents yet.</Text>
           )}
 
           {approvedResidents.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-                <Stack gap={2}>
-                  <Group gap="xs">
-                    <Text fw={600}>
-                      {user.full_name || 'Unnamed resident'}
+
+                {/* Avatar + info */}
+                <Group align="center" gap="md">
+                  <Avatar color="blue" radius="xl">{initials(user.full_name)}</Avatar>
+
+                  <Stack gap={2}>
+                    <Group gap="xs">
+                      <Text fw={600}>{user.full_name || 'Unnamed resident'}</Text>
+                      <Badge size="xs" variant="outline">Resident</Badge>
+                    </Group>
+
+                    <Text size="sm" c="dimmed">{user.email}</Text>
+
+                    {user.flat_number && (
+                      <Text size="sm" c="dimmed">Flat: {user.flat_number}</Text>
+                    )}
+
+                    <Text size="xs" c="dimmed">
+                      Member since: {new Date(user.created_at).toLocaleDateString()}
                     </Text>
-                    <Badge size="xs" variant="outline">
-                      Resident
-                    </Badge>
-                  </Group>
-
-                  <Text size="sm" c="dimmed">
-                    {user.email}
-                  </Text>
-
-                  {user.flat_number && (
-                    <Text size="sm" c="dimmed">
-                      Flat: {user.flat_number}
-                    </Text>
-                  )}
-
-                  <Text size="xs" c="dimmed">
-                    Member since:{' '}
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </Text>
-                </Stack>
+                  </Stack>
+                </Group>
 
                 <Button
                   variant="destructive"
@@ -244,39 +244,46 @@ export default function AdminResidentsPage() {
           ))}
         </Stack>
 
-        {/* Admins list (optional but useful) */}
+        {/* Admins */}
         <Stack gap="md">
-          <Text fw={700} size="xl">
-            Admins
-          </Text>
+          <Text fw={700} size="xl">Admins</Text>
 
           {admins.length === 0 && (
-            <Text c="dimmed" size="sm">
-              No admins found.
-            </Text>
+            <Text c="dimmed" size="sm">No admins found.</Text>
           )}
 
           {admins.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-                <Stack gap={2}>
-                  <Group gap="xs">
-                    <Text fw={600}>
-                      {user.full_name || 'Unnamed admin'}
+
+                <Group align="center" gap="md">
+                  <Avatar
+                    radius="xl"
+                    color="blue"
+                    styles={{
+                      root: {
+                        fontWeight: 700,
+                        border: "2px solid #2B6CB0",
+                      },
+                    }}
+                  >
+                    {initials(user.full_name)}
+                  </Avatar>
+
+                  <Stack gap={2}>
+                    <Group gap="xs">
+                      <Text fw={600}>{user.full_name || 'Unnamed admin'}</Text>
+                      <Badge size="xs" variant="outline">Admin</Badge>
+                    </Group>
+
+                    <Text size="sm" c="dimmed">{user.email}</Text>
+
+                    <Text size="xs" c="dimmed">
+                      Created at: {new Date(user.created_at).toLocaleString()}
                     </Text>
-                    <Badge size="xs" variant="outline">
-                      Admin
-                    </Badge>
-                  </Group>
+                  </Stack>
+                </Group>
 
-                  <Text size="sm" c="dimmed">
-                    {user.email}
-                  </Text>
-
-                  <Text size="xs" c="dimmed">
-                    Created at: {new Date(user.created_at).toLocaleString()}
-                  </Text>
-                </Stack>
               </Group>
             </Card>
           ))}
