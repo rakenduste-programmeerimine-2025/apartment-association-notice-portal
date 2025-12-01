@@ -17,6 +17,7 @@ export async function POST(req: Request) {
       houseNumber, 
       city, 
       country 
+      country
     } = body;
 
     if (!email || !password || !fullName || !flatNumber || !ads_oid) {
@@ -95,6 +96,7 @@ export async function POST(req: Request) {
       flat_number: flatNumber,
       community_id: community.id, 
       role: "resident",
+      status: "pending",
     });
 
     if (insertError) {

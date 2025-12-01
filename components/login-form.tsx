@@ -1,18 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { Flex } from '@mantine/core';
+import { Flex, Alert } from '@mantine/core';
+import { Info, AlertCircle } from 'lucide-react';
 
 export function LoginForm() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const pendingSignup = searchParams.get('pending') === '1';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,15 +35,37 @@ export function LoginForm() {
       });
 
       if (error) throw error;
-
-      //
+      
       const role = authData.user?.user_metadata?.role;
+      const userId = authData.user.id;
 
-      // redirect
-      if (role === 'admin') {
-        router.push('/protected/Admin/Notices');
-      } else {
-        router.push('/protected/Resident/Notices');
+      const { data: residentRow, error: fetchErr } = await supabase
+        .from('users')
+        .select('status, community_id, role')
+        .eq('id', userId)
+        .single();
+
+      if (fetchErr) throw fetchErr;
+
+      if (residentRow.status === 'pending') {
+        await supabase.auth.signOut();
+        setError('Your registration is under review by your community administrator.');
+        return;
+      }
+
+      if (residentRow.status === 'rejected') {
+        await supabase.from('users').delete().eq('id', userId);
+        await supabase.auth.admin.deleteUser(userId);
+        setError('Your account was rejected. Please reach out to the administrator of your community.');
+        return;
+      }
+
+      if (residentRow.status === 'approved') {
+        if (residentRow.role === 'resident') {
+          router.push('/protected/Resident/Notices');
+        } else {
+          router.push('/protected/Admin/Notices');
+        }
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -55,6 +81,18 @@ export function LoginForm() {
         <CardDescription>Access your account</CardDescription>
       </CardHeader>
       <CardContent>
+        {pendingSignup && (
+          <Alert icon={<Info size={18} />} color="blue" variant="light" radius="md" mb="md">
+            Your registration was submitted. Please wait for admin approval.
+          </Alert>
+        )}
+
+        {error && (
+          <Alert icon={<AlertCircle size={18} />} color="red" variant="light" radius="md" mb="md">
+            {error}
+          </Alert>
+        )}
+
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <Label>Email</Label>
@@ -75,7 +113,6 @@ export function LoginForm() {
               required
             />
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
