@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Card, Text, Stack, Loader, Center, ScrollArea, Badge, Flex, Group } from '@mantine/core';
+import { Card, Text, Stack, ScrollArea, Badge, Flex, Group, LoadingOverlay, } from '@mantine/core';
 import FiltersWorries from '@/components/FiltersWorries';
 
 type Worry = {
@@ -25,8 +25,10 @@ export default function ResidentWorriesPage() {
 
   const [page, setPage] = useState(initialPage);
   const [worries, setWorries] = useState<Worry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [count, setCount] = useState(0);
+
+  const [actionLoading, setActionLoading] = useState(false);//
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const itemsPerPage = 3;
 
@@ -38,7 +40,7 @@ export default function ResidentWorriesPage() {
 
   useEffect(() => {
     const fetchWorries = async () => {
-      setLoading(true);
+       setActionLoading(true);
 
       try {
         const from = (page - 1) * itemsPerPage;
@@ -74,19 +76,27 @@ export default function ResidentWorriesPage() {
           .range(from, to);
 
         if (error) {
-          console.error('Error fetching resident worries:', error.message);
-          setWorries([]);
-          setCount(0);
+          let errorMessage = 'Unknown error';
+        try {
+          errorMessage = typeof error.message === 'string' ? error.message : JSON.stringify(error);
+      } catch {
+          errorMessage = 'Error parsing Supabase error';
+      }
+        console.error('Error fetching resident worries:', errorMessage);
+
+        setWorries([]);
+        setCount(0);
         } else {
           setWorries((data || []) as Worry[]);
           setCount(count || 0);
         }
       } catch (err) {
-        console.error(err);
+        console.error('Unexpected error fetching resident worries:', err);
         setWorries([]);
         setCount(0);
       } finally {
-        setLoading(false);
+        setActionLoading(false);
+        setInitialLoading(false);
       }
     };
 
@@ -99,15 +109,14 @@ export default function ResidentWorriesPage() {
 
   const totalPages = Math.ceil(count / itemsPerPage);
 
-  if (loading) {
-    return (
-      <Center mt="xl">
-        <Loader />
-      </Center>
-    );
-  }
-
   return (
+    <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#fff' }}>
+      {/*  Overlay  */}
+      <LoadingOverlay
+        visible={actionLoading}
+        zIndex={2000}
+        loaderProps={{ size: 'xl', variant: 'bars', color: 'blue' }}
+      />
     <ScrollArea style={{ maxHeight: 'calc(100vh - 80px)' }} px="md" py="lg">
       <Stack gap="md">
         <Flex justify="space-between" align="center" w="100%">
@@ -128,7 +137,7 @@ export default function ResidentWorriesPage() {
           </Badge>
         </Flex>
 
-        {worries.length === 0 && (
+        {!actionLoading && !initialLoading && worries.length === 0 && (
           <Text c="dimmed" size="sm">
             No worries have been submitted yet.
           </Text>
@@ -194,5 +203,6 @@ export default function ResidentWorriesPage() {
         )}
       </Stack>
     </ScrollArea>
+    </div>
   );
 }
