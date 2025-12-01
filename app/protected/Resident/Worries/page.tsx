@@ -27,7 +27,7 @@ export default function ResidentWorriesPage() {
   const [worries, setWorries] = useState<Worry[]>([]);
   const [loading, setLoading] = useState(true);
   const [count, setCount] = useState(0);
-  
+
   const itemsPerPage = 3;
 
   const buildPageUrl = (newPage: number) => {
@@ -44,8 +44,10 @@ export default function ResidentWorriesPage() {
         const from = (page - 1) * itemsPerPage;
         const to = from + itemsPerPage - 1;
 
-        const { data: { user } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (!user) {
           setWorries([]);
           setCount(0);
@@ -67,7 +69,7 @@ export default function ResidentWorriesPage() {
         const { data, error, count } = await supabase
           .from('worries')
           .select('id, title, content, created_at', { count: 'exact' })
-          .eq('community_id', profile.community_id) 
+          .eq('community_id', profile.community_id)
           .order('created_at', { ascending: sort === 'oldest' })
           .range(from, to);
 
@@ -132,21 +134,35 @@ export default function ResidentWorriesPage() {
           </Text>
         )}
 
-        {worries.map((worry) => (
-          <Card key={worry.id} withBorder shadow="sm" radius="md">
-            <Text fw={600}>{worry.title || 'Untitled worry'}</Text>
+        {worries.map((worry) => {
+          const date = new Date(worry.created_at + 'Z');
+          const formattedDate = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          });
+          const formattedTime = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          });
 
-            {worry.content && (
-              <Text size="sm" mt="xs">
-                {worry.content}
+          return (
+            <Card key={worry.id} withBorder shadow="sm" radius="md">
+              <Text fw={600}>{worry.title || 'Untitled worry'}</Text>
+
+              {worry.content && (
+                <Text size="sm" mt="xs">
+                  {worry.content}
+                </Text>
+              )}
+
+              <Text size="xs" c="dimmed" mt="xs">
+                {formattedDate}, {formattedTime}
               </Text>
-            )}
-
-            <Text size="xs" c="dimmed" mt="xs">
-              {new Date(worry.created_at).toLocaleString()}
-            </Text>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
 
         {/* Pagination */}
         {worries.length > 0 && (

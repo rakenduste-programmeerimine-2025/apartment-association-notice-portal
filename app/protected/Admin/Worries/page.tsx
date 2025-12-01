@@ -20,7 +20,6 @@ export default function AdminWorriesPage() {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  
   const itemsPerPage = 3;
 
   const buildPageUrl = (newPage: number) => {
@@ -45,16 +44,13 @@ export default function AdminWorriesPage() {
   }, [page, sort, itemsPerPage]);
 
   const handleDelete = async (id: string) => {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this worry?',
-    );
+    const confirmed = window.confirm('Are you sure you want to delete this worry?');
     if (!confirmed) return;
 
     setDeletingId(id);
 
     try {
       await deleteWorry(id);
-      
       await fetchWorries();
 
       if (worries.length === 1 && page > 1) {
@@ -62,7 +58,6 @@ export default function AdminWorriesPage() {
         setPage(newPage);
         router.push(buildPageUrl(newPage));
       }
-
     } catch (error: unknown) {
       console.error('Error deleting worry:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -99,7 +94,6 @@ export default function AdminWorriesPage() {
           </Text>
           <FiltersWorries />
         </Flex>
-        
         <Flex gap="xs" mt={-4} justify="flex-end" align="center" w="100%">
           <Badge
             color="blue"
@@ -118,42 +112,53 @@ export default function AdminWorriesPage() {
           </Text>
         )}
 
-        {worries.map((worry) => (
-          <Card key={worry.id} withBorder shadow="sm" radius="md">
-            <Group justify="space-between" align="flex-start" mb="xs">
-              <Stack gap={2}>
-                <Text fw={600}>{worry.title || 'Untitled worry'}</Text>
+        {worries.map((worry) => {
+          const date = new Date(worry.created_at + 'Z');
+          const formattedDate = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          });
+          const formattedTime = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
 
-                <Text size="sm" c="dimmed">
-                  {worry.created_by
-                    ? `Created by ${worry.created_by}`
-                    : 'Created by resident'}
+          return (
+            <Card key={worry.id} withBorder shadow="sm" radius="md">
+              <Group justify="space-between" align="flex-start" mb="xs">
+                <Stack gap={2}>
+                  <Text fw={600}>{worry.title || 'Untitled worry'}</Text>
+
+                  <Text size="sm" c="dimmed">
+                    {worry.created_by ? `Created by ${worry.created_by}` : 'Created by resident'}
+                  </Text>
+
+                  <Text size="xs" c="dimmed">
+                    {formattedDate}, {formattedTime}
+                  </Text>
+                </Stack>
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(worry.id)}
+                  disabled={deletingId === worry.id}
+                >
+                  {deletingId === worry.id ? 'Deleting…' : 'Delete'}
+                </Button>
+              </Group>
+
+              {worry.content && (
+                <Text size="sm" mt="xs">
+                  {worry.content}
                 </Text>
+              )}
+            </Card>
+          );
+        })}
 
-                <Text size="xs" c="dimmed">
-                  {new Date(worry.created_at).toLocaleString()}
-                </Text>
-              </Stack>
-
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDelete(worry.id)}
-                disabled={deletingId === worry.id}
-              >
-                {deletingId === worry.id ? 'Deleting…' : 'Delete'}
-              </Button>
-            </Group>
-
-            {worry.content && (
-              <Text size="sm" mt="xs">
-                {worry.content}
-              </Text>
-            )}
-          </Card>
-        ))}
-
-        {/* Pagination */}
         {worries.length > 0 && (
           <Group justify="center" mt="md" gap="md">
             {page > 1 && (
