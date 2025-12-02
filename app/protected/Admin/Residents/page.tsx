@@ -2,7 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Card, Text, Group, Stack, Loader, Center, ScrollArea, Badge, Avatar } from '@mantine/core';
+import {
+  Card,
+  Text,
+  Group,
+  Stack,
+  Loader,
+  Center,
+  ScrollArea,
+  Badge,
+  Avatar,
+  LoadingOverlay,
+} from '@mantine/core';
 import { Button } from '@/components/ui/button';
 import type { CommunityId } from '@/types/community';
 import { removeResidentAction } from './actions';
@@ -92,14 +103,6 @@ export default function AdminResidentsPage() {
     setUpdatingId(null);
   };
 
-  if (loading) {
-    return (
-      <Center mt="xl">
-        <Loader />
-      </Center>
-    );
-  }
-
   const admins = users.filter((u) => u.role === 'admin');
   const pendingResidents = users.filter((u) => u.role === 'resident' && u.status === 'pending');
   const approvedResidents = users.filter((u) => u.role === 'resident' && u.status === 'approved');
@@ -117,6 +120,12 @@ export default function AdminResidentsPage() {
     //scrollarea(kõrgus) is muudetud selleks et scrolimine yldse töötaks,nyyd töötab
     <ScrollArea h="100vh" px="md" py="lg">
       <Stack gap="xl">
+        <LoadingOverlay
+          visible={loading || updatingId !== null}
+          zIndex={20}
+          loaderProps={{ size: 'xl', variant: 'bars', color: 'blue' }}
+        />
+
         {/* Pending join requests */}
         <Stack gap="md">
           <Text fw={700} size="xl">
