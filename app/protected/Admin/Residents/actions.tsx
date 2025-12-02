@@ -17,6 +17,8 @@ export async function removeResidentAction(id: string) {
 
   if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
 
+  await supabase.from('worries').delete().eq('created_by', id);
+
   const { error } = await supabase
     .from('users')
     .delete()
