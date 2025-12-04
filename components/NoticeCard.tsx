@@ -21,21 +21,21 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
   const [opened, setOpened] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // LIKE STATES
+  // LIKE STATE
   const [liked, setLiked] = useState<boolean>(!!notice.hasLiked);
   const [likesCount, setLikesCount] = useState<number>(notice.likesCount ?? 0);
 
-  const date = new Date(notice.created_at + "Z");
+  const date = new Date(notice.created_at + 'Z');
 
-  const formattedDate = date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
+  const formattedDate = date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
   });
 
-  const formattedTime = date.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
+  const formattedTime = date.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
     hour12: false,
   });
 
@@ -58,7 +58,7 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
     onDelete?.();
   };
 
-  // LIKE HANDLER (residents only)
+  // LIKE HANDLER (RESIDENT)
   const handleLike = () => {
     if (role !== 'resident') return;
 
@@ -68,7 +68,7 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
         setLiked(res.liked);
         setLikesCount(res.likesCount);
       } catch (err) {
-        console.error(err);
+        console.error('Error toggling notice like:', err);
       }
     });
   };
@@ -93,7 +93,7 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
           {notice.content}
         </Text>
 
-        {/* RESIDENT LIKE BUTTON */}
+        {/* RESIDENT: like/unlike button */}
         {role === 'resident' && (
           <Group justify="flex-start" mt="md">
             <Button
@@ -107,10 +107,12 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
           </Group>
         )}
 
-        {/* ADMIN LIKE COUNT */}
+        {/* ADMIN: show like count + edit/delete */}
         {role === 'admin' && (
           <Group justify="space-between" mt="md">
-            <Text size="xs" c="dimmed">Likes: {likesCount}</Text>
+            <Text size="xs" c="dimmed">
+              Likes: {likesCount}
+            </Text>
 
             <Group>
               <EditButtonNotice id={notice.id} onClick={() => setOpened(true)} />
