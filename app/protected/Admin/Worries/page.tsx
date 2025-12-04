@@ -149,14 +149,17 @@ export default function AdminWorriesPage() {
                 <Group justify="space-between" align="flex-start" mb="xs">
                   <Stack gap={2}>
                     <Text fw={600}>{worry.title || 'Untitled worry'}</Text>
+
                     <Text size="sm" c="dimmed">
-                      {worry.created_by
-                        ? `Created by ${worry.created_by}`
+                      {worry.creator_name
+                        ? `Created by ${worry.creator_name}`
                         : 'Created by resident'}
                     </Text>
+
                     <Text size="xs" c="dimmed">
                       {formattedDate}, {formattedTime}
                     </Text>
+
                     <Text size="xs" c="dimmed">
                       Likes: {worry.likesCount ?? 0}
                     </Text>
