@@ -1,22 +1,30 @@
 'use client';
-import { useState } from 'react';
-import { Card, Text, Badge, Group } from '@mantine/core';
+
+import { useState, useTransition } from 'react';
+import { Card, Text, Badge, Group, Button } from '@mantine/core';
 import type { Notice } from '@/types/Notice';
 import DeleteButtonNotice from '@/app/protected/Admin/Notices/components/DeleteButtonNotice';
 import EditButtonNotice from '@/app/protected/Admin/Notices/components/EditButtonNotice';
 import EditNoticeModal from '@/app/protected/Admin/Notices/components/EditNoticeModal';
 import { updateNotice, deleteNotice } from '@/app/protected/Admin/Notices/actions';
+import { toggleNoticeLike } from '@/app/protected/Resident/Notices/actions';
 
 interface Props {
   notice: Notice;
   role?: 'admin' | 'resident';
-  onUpdate?: (values: { title: string; content: string; category: string }) => void; // 
-  onDelete?: () => void; 
-  onAfterSave?: () => void; 
+  onUpdate?: (values: { title: string; content: string; category: string }) => void;
+  onDelete?: () => void;
+  onAfterSave?: () => void;
 }
 
 export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSave }: Props) {
   const [opened, setOpened] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  // LIKE STATES
+  const [liked, setLiked] = useState<boolean>(!!notice.hasLiked);
+  const [likesCount, setLikesCount] = useState<number>(notice.likesCount ?? 0);
+
   const date = new Date(notice.created_at + "Z");
 
   const formattedDate = date.toLocaleDateString("en-GB", {
@@ -40,20 +48,34 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
       ? 'blue'
       : 'gray';
 
-
   const handleUpdate = async (values: { title: string; content: string; category: string }) => {
-    await updateNotice(notice.id, values); 
-    onUpdate?.(values); 
+    await updateNotice(notice.id, values);
+    onUpdate?.(values);
   };
 
   const handleDelete = async () => {
     await deleteNotice(notice.id);
-    onDelete?.(); 
+    onDelete?.();
+  };
+
+  // LIKE HANDLER (residents only)
+  const handleLike = () => {
+    if (role !== 'resident') return;
+
+    startTransition(async () => {
+      try {
+        const res = await toggleNoticeLike(notice.id);
+        setLiked(res.liked);
+        setLikesCount(res.likesCount);
+      } catch (err) {
+        console.error(err);
+      }
+    });
   };
 
   return (
     <>
-      <Card radius="md" padding="sm" withBorder style={{ maxWidth: 600, margin: '18xpx auto' }}>
+      <Card radius="md" padding="sm" withBorder style={{ maxWidth: 600, margin: '18px auto' }}>
         <Group justify="space-between" mb="xs">
           <Badge color={badgeColor} size="sm" variant="filled">
             {notice.category}
@@ -71,19 +93,39 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
           {notice.content}
         </Text>
 
+        {/* RESIDENT LIKE BUTTON */}
+        {role === 'resident' && (
+          <Group justify="flex-start" mt="md">
+            <Button
+              size="xs"
+              variant={liked ? 'filled' : 'outline'}
+              loading={isPending}
+              onClick={handleLike}
+            >
+              {liked ? 'Unlike' : 'Like'} · {likesCount}
+            </Button>
+          </Group>
+        )}
+
+        {/* ADMIN LIKE COUNT */}
         {role === 'admin' && (
-          <Group justify="flex-end" mt="md">
-            <EditButtonNotice id={notice.id} onClick={() => setOpened(true)} />
-            <DeleteButtonNotice id={notice.id} onClick={handleDelete} />
+          <Group justify="space-between" mt="md">
+            <Text size="xs" c="dimmed">Likes: {likesCount}</Text>
+
+            <Group>
+              <EditButtonNotice id={notice.id} onClick={() => setOpened(true)} />
+              <DeleteButtonNotice id={notice.id} onClick={handleDelete} />
+            </Group>
           </Group>
         )}
       </Card>
 
+      {/* ADMIN EDIT MODAL */}
       <EditNoticeModal
         opened={opened}
         onClose={() => setOpened(false)}
         notice={notice}
-        onSubmit={handleUpdate} 
+        onSubmit={handleUpdate}
         onAfterSave={onAfterSave}
       />
     </>
