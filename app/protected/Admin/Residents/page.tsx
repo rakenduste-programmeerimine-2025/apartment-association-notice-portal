@@ -1,39 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import {
   Card,
   Text,
   Group,
   Stack,
-  Loader,
-  Center,
   ScrollArea,
   Badge,
   Avatar,
   LoadingOverlay,
 } from '@mantine/core';
 import { Button } from '@/components/ui/button';
-import type { CommunityId } from '@/types/community';
-import { removeResidentAction } from './actions';
-
-type User = {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  role: 'admin' | 'resident' | null;
-  community_id: CommunityId | null;
-  flat_number: string | null;
-  created_at: string;
-  status: 'pending' | 'approved' | 'rejected' | null;
-};
+import { createClient } from '@/lib/supabase/client';
+import { getResidents, removeResidentAction, type AdminResident } from './actions';
 
 const supabase = createClient();
 
-// Read community_id from env so each developer / environment can configure it
-const COMMUNITY_ID: CommunityId | '' =
-  (process.env.NEXT_PUBLIC_COMMUNITY_ID as CommunityId | undefined) ?? '';
+type User = AdminResident;
 
 export default function AdminResidentsPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -45,25 +29,11 @@ export default function AdminResidentsPage() {
       setLoading(true);
 
       try {
-        let query = supabase
-          .from('users')
-          .select('id, email, full_name, role, community_id, flat_number, created_at, status')
-          .order('created_at', { ascending: false });
-        //  If COMMUNITY_ID is set, filter by it
-        if (COMMUNITY_ID) {
-          query = query.eq('community_id', COMMUNITY_ID);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error('Error fetching users:', error.message);
-          setUsers([]);
-        } else {
-          setUsers((data || []) as User[]);
-        }
+        // ✅ Now filtered by admin's community in server action
+        const { data } = await getResidents(1, 200, 'newest');
+        setUsers(data);
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching residents:', err);
         setUsers([]);
       } finally {
         setLoading(false);
@@ -117,7 +87,6 @@ export default function AdminResidentsPage() {
       : 'U';
 
   return (
-    //scrollarea(kõrgus) is muudetud selleks et scrolimine yldse töötaks,nyyd töötab
     <ScrollArea h="100vh" px="md" py="lg">
       <Stack gap="xl">
         <LoadingOverlay
@@ -141,12 +110,10 @@ export default function AdminResidentsPage() {
           {pendingResidents.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-                {/* Avatar + info */}
                 <Group align="center" gap="md">
                   <Avatar color="gray" radius="xl">
                     {initials(user.full_name)}
                   </Avatar>
-                  {/* värv sinna saab muuta  */}
                   <Stack gap={2}>
                     <Text fw={600}>{user.full_name || 'Unnamed resident'}</Text>
                     <Text size="sm" c="dimmed">
@@ -202,7 +169,6 @@ export default function AdminResidentsPage() {
           {approvedResidents.map((user) => (
             <Card key={user.id} withBorder shadow="sm" radius="md">
               <Group justify="space-between" align="flex-start">
-                {/* Avatar + info */}
                 <Group align="center" gap="md">
                   <Avatar color="blue" radius="xl">
                     {initials(user.full_name)}
