@@ -30,7 +30,7 @@ export async function getNotices(
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // SELECT not only notices but also likes
+    // SELECT notices + related likes from likesnotice
     let query = supabase
       .from('notices')
       .select(
@@ -41,7 +41,7 @@ export async function getNotices(
         category,
         community_id,
         created_at,
-        likesNotices (
+        likesnotice (
           id,
           user_id
         )
@@ -59,14 +59,14 @@ export async function getNotices(
     const { data, count, error } = await query.range(from, to);
     if (error) throw error;
 
-    // Map Supabase result → Notice with likesCount + hasLiked
+    // Map into Notice with likesCount + hasLiked
     const notices: Notice[] =
       (data ?? []).map((row: any) => {
-        const likes = row.likesNotices ?? [];
+        const likes = row.likesnotice ?? [];
         const likesCount = likes.length;
         const hasLiked = likes.some((l: any) => l.user_id === auth.user.id);
 
-        const { likesNotices, ...rest } = row;
+        const { likesnotice, ...rest } = row;
         return {
           ...rest,
           likesCount,
@@ -76,12 +76,13 @@ export async function getNotices(
 
     return { data: notices, count: count ?? 0 };
   } catch (err) {
-    throw err;
+    console.error('Error fetching notices:', err);
+    return { data: [], count: 0 };
   }
 }
 
 // ----------------------------
-// GET MEETINGS
+// GET MEETINGS (unchanged)
 // ----------------------------
 export async function getMeetings(): Promise<Meeting[]> {
   try {
@@ -107,12 +108,13 @@ export async function getMeetings(): Promise<Meeting[]> {
     if (error) throw error;
     return data ?? [];
   } catch (err) {
-    throw err;
+    console.error('Error fetching meetings:', err);
+    return [];
   }
 }
 
 // ----------------------------
-// LIKE / UNLIKE NOTICE
+// TOGGLE LIKE / UNLIKE NOTICE
 // ----------------------------
 export async function toggleNoticeLike(
   noticeId: string
@@ -124,22 +126,25 @@ export async function toggleNoticeLike(
     throw new Error('Not authenticated');
   }
 
-  // Check if user already liked it
+  const userId = auth.user.id;
+
+  // Check if like already exists
   const { data: existing, error: existingError } = await supabase
-    .from('likesNotices')
+    .from('likesnotice')
     .select('id')
     .eq('notice_id', noticeId)
-    .eq('user_id', auth.user.id)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (existingError && existingError.code !== 'PGRST116') {
+    // ignore "no rows" error, throw other errors
     throw existingError;
   }
 
   if (existing) {
     // UNLIKE
     const { error: delError } = await supabase
-      .from('likesNotices')
+      .from('likesnotice')
       .delete()
       .eq('id', existing.id);
 
@@ -147,18 +152,18 @@ export async function toggleNoticeLike(
   } else {
     // LIKE
     const { error: insError } = await supabase
-      .from('likesNotices')
+      .from('likesnotice')
       .insert({
         notice_id: noticeId,
-        user_id: auth.user.id,
+        user_id: userId,
       });
 
     if (insError) throw insError;
   }
 
-  // Count total likes for this notice
+  // Re-count likes
   const { count } = await supabase
-    .from('likesNotices')
+    .from('likesnotice')
     .select('*', { count: 'exact', head: true })
     .eq('notice_id', noticeId);
 
