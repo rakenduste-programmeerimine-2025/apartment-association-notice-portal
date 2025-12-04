@@ -75,7 +75,12 @@ export default function NoticeCard({ notice, role, onUpdate, onDelete, onAfterSa
 
   return (
     <>
+<<<<<<< Updated upstream
       <Card radius="md" padding="sm" withBorder style={{ maxWidth: 600, margin: '18px auto' }}>
+=======
+      {/* width fixed to 100%, spacing handled by parent via gap */}
+      <Card radius="md" padding="lg" withBorder shadow="sm" style={{ width: '100%' }}>
+>>>>>>> Stashed changes
         <Group justify="space-between" mb="xs">
           <Badge color={badgeColor} size="sm" variant="filled">
             {notice.category}
