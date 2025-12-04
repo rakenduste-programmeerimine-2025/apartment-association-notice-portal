@@ -5,10 +5,9 @@ import { createClient } from '@/lib/supabase/server';
 import { Meeting } from '@/types/Meeting';
 import type { Notice } from '@/types/Notice';
 
-// ADMIN: Notices
 export async function getNotices(
   page = 1,
-  limit = 1,
+  limit = 1, // 
   category?: string,
   sort: 'newest' | 'oldest' = 'newest'
 ): Promise<{ data: Notice[]; count: number }> {
@@ -29,24 +28,9 @@ export async function getNotices(
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // UPDATED SELECT WITH likesNotices
     let query = supabase
       .from('notices')
-      .select(
-        `
-        id,
-        title,
-        content,
-        category,
-        community_id,
-        created_at,
-        likesNotices (
-          id,
-          user_id
-        )
-      `,
-        { count: 'exact' }
-      )
+      .select('id, title, content, category, community_id, created_at', { count: 'exact' })
       .eq('community_id', profile.community_id);
 
     if (category && category !== '') {
@@ -58,23 +42,12 @@ export async function getNotices(
     const { data, count, error } = await query.range(from, to);
     if (error) throw error;
 
-    // ADMIN only needs like count
-    const notices: Notice[] =
-      (data ?? []).map((row: any) => {
-        const likes = row.likesNotices ?? [];
-        const likesCount = likes.length;
-
-        const { likesNotices, ...rest } = row;
-        return { ...rest, likesCount } as Notice;
-      });
-
-    return { data: notices, count: count ?? 0 };
+    return { data: data ?? [], count: count ?? 0 };
   } catch (err) {
     throw err;
   }
 }
 
-// Meetings (unchanged)
 export async function getMeetings(): Promise<Meeting[]> {
   try {
     const supabase = await createClient();
@@ -107,13 +80,11 @@ export async function updateNotice(id: string, values: { title: string; content:
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
-
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
     .eq('id', auth.user.id)
     .single();
-
   if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
 
   const { error } = await supabase
@@ -134,13 +105,11 @@ export async function updateMeeting(
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
-
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
     .eq('id', auth.user.id)
     .single();
-
   if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
 
   const { error } = await supabase
@@ -158,13 +127,11 @@ export async function deleteNotice(id: string) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
-
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
     .eq('id', auth.user.id)
     .single();
-
   if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
 
   const { error } = await supabase
@@ -182,13 +149,11 @@ export async function deleteMeeting(id: string) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
-
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
     .eq('id', auth.user.id)
     .single();
-
   if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
 
   const { error } = await supabase
