@@ -2,16 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import type { CommunityId } from '@/types/community';
-
-export type Worry = {
-  id: string;
-  title: string | null;
-  content: string | null;
-  created_at: string;
-  created_by: string | null;
-  community_id: CommunityId;
-};
+import type { Worry } from '@/types/Worry';
 
 export async function getWorries(
   page = 1,
@@ -36,16 +27,39 @@ export async function getWorries(
     const to = from + limit - 1;
 
     let query = supabase
-      .from('worries')
-      .select('id, title, content, created_at, created_by, community_id', { count: 'exact' })
-      .eq('community_id', profile.community_id);
+  .from('worries')
+  .select(
+    `
+    id,
+    title,
+    content,
+    created_at,
+    created_by,
+    community_id,
+    likesworry (
+      id,
+      user_id
+    )
+  `,
+    { count: 'exact' }
+  )
+  .eq('community_id', profile.community_id);
 
-    query = query.order('created_at', { ascending: sort === 'oldest' });
+query = query.order('created_at', { ascending: sort === 'oldest' });
 
-    const { data, count, error } = await query.range(from, to);
-    if (error) throw error;
+const { data, count, error } = await query.range(from, to);
+if (error) throw error;
 
-    return { data: data ?? [], count: count ?? 0 };
+const worries: Worry[] =
+  (data ?? []).map((row: any) => {
+    const likes = row.likesworry ?? [];
+    const likesCount = likes.length;
+
+    const { likesworry, ...rest } = row;
+    return { ...rest, likesCount } as Worry;
+  });
+
+return { data: worries, count: count ?? 0 };
   } catch (err) {
     console.error('Error fetching worries:', err);
     return { data: [], count: 0 };

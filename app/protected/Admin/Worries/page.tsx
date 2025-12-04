@@ -13,7 +13,8 @@ import {
   Button,
   LoadingOverlay,
 } from '@mantine/core';
-import { getWorries, deleteWorry, type Worry } from './actions';
+import { getWorries, deleteWorry } from './actions';
+import type { Worry } from '@/types/Worry';
 import FiltersWorries from '@/components/FiltersWorries';
 
 export default function AdminWorriesPage() {
@@ -28,7 +29,7 @@ export default function AdminWorriesPage() {
   const [worries, setWorries] = useState<Worry[]>([]);
   const [count, setCount] = useState(0);
 
-  const [actionLoading, setActionLoading] = useState(false); 
+  const [actionLoading, setActionLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const itemsPerPage = 3;
@@ -156,6 +157,9 @@ export default function AdminWorriesPage() {
                     <Text size="xs" c="dimmed">
                       {formattedDate}, {formattedTime}
                     </Text>
+                    <Text size="xs" c="dimmed">
+                      Likes: {worry.likesCount ?? 0}
+                    </Text>
                   </Stack>
 
                   <Button
@@ -168,7 +172,11 @@ export default function AdminWorriesPage() {
                   </Button>
                 </Group>
 
-                {worry.content && <Text size="sm" mt="xs">{worry.content}</Text>}
+                {worry.content && (
+                  <Text size="sm" mt="xs">
+                    {worry.content}
+                  </Text>
+                )}
               </Card>
             );
           })}
