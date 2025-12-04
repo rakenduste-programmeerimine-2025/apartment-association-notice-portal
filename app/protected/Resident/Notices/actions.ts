@@ -1,15 +1,13 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { Meeting } from '@/types/Meeting';
 import type { Notice } from '@/types/Notice';
 
-// ----------------------------
-// GET NOTICES (WITH LIKES)
-// ----------------------------
 export async function getNotices(
   page = 1,
-  limit = 3,
+  limit = 1, // 
   category?: string,
   sort: 'newest' | 'oldest' = 'newest'
 ): Promise<{ data: Notice[]; count: number }> {
@@ -30,24 +28,9 @@ export async function getNotices(
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // SELECT notices + related likes from likesnotice
     let query = supabase
       .from('notices')
-      .select(
-        `
-        id,
-        title,
-        content,
-        category,
-        community_id,
-        created_at,
-        likesnotice (
-          id,
-          user_id
-        )
-      `,
-        { count: 'exact' }
-      )
+      .select('id, title, content, category, community_id, created_at', { count: 'exact' })
       .eq('community_id', profile.community_id);
 
     if (category && category !== '') {
@@ -59,31 +42,12 @@ export async function getNotices(
     const { data, count, error } = await query.range(from, to);
     if (error) throw error;
 
-    // Map into Notice with likesCount + hasLiked
-    const notices: Notice[] =
-      (data ?? []).map((row: any) => {
-        const likes = row.likesnotice ?? [];
-        const likesCount = likes.length;
-        const hasLiked = likes.some((l: any) => l.user_id === auth.user.id);
-
-        const { likesnotice, ...rest } = row;
-        return {
-          ...rest,
-          likesCount,
-          hasLiked,
-        } as Notice;
-      });
-
-    return { data: notices, count: count ?? 0 };
+    return { data: data ?? [], count: count ?? 0 };
   } catch (err) {
-    console.error('Error fetching notices:', err);
-    return { data: [], count: 0 };
+    throw err;
   }
 }
 
-// ----------------------------
-// GET MEETINGS (unchanged)
-// ----------------------------
 export async function getMeetings(): Promise<Meeting[]> {
   try {
     const supabase = await createClient();
@@ -101,74 +65,104 @@ export async function getMeetings(): Promise<Meeting[]> {
 
     const { data, error } = await supabase
       .from('meetings')
-      .select('id, title, description, meeting_date, community_id, duration')
+      .select('id, title, description, meeting_date, duration, community_id')
       .eq('community_id', profile.community_id)
       .order('meeting_date', { ascending: true });
 
     if (error) throw error;
     return data ?? [];
   } catch (err) {
-    console.error('Error fetching meetings:', err);
-    return [];
+    throw err;
   }
 }
 
-// ----------------------------
-// TOGGLE LIKE / UNLIKE NOTICE
-// ----------------------------
-export async function toggleNoticeLike(
-  noticeId: string
-): Promise<{ liked: boolean; likesCount: number }> {
+export async function updateNotice(id: string, values: { title: string; content: string; category: string }) {
   const supabase = await createClient();
-
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth?.user) {
-    throw new Error('Not authenticated');
-  }
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
 
-  const userId = auth.user.id;
+  const { error } = await supabase
+    .from('notices')
+    .update(values)
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
 
-  // Check if like already exists
-  const { data: existing, error: existingError } = await supabase
-    .from('likesnotice')
-    .select('id')
-    .eq('notice_id', noticeId)
-    .eq('user_id', userId)
-    .maybeSingle();
+  if (error) throw new Error(error.message);
 
-  if (existingError && existingError.code !== 'PGRST116') {
-    // ignore "no rows" error, throw other errors
-    throw existingError;
-  }
+  revalidatePath('/protected/Admin/Notices');
+}
 
-  if (existing) {
-    // UNLIKE
-    const { error: delError } = await supabase
-      .from('likesnotice')
-      .delete()
-      .eq('id', existing.id);
+export async function updateMeeting(
+  id: string,
+  values: { title: string; description: string; meeting_date: string; duration: string }
+) {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
 
-    if (delError) throw delError;
-  } else {
-    // LIKE
-    const { error: insError } = await supabase
-      .from('likesnotice')
-      .insert({
-        notice_id: noticeId,
-        user_id: userId,
-      });
+  const { error } = await supabase
+    .from('meetings')
+    .update(values)
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
 
-    if (insError) throw insError;
-  }
+  if (error) throw new Error(error.message);
 
-  // Re-count likes
-  const { count } = await supabase
-    .from('likesnotice')
-    .select('*', { count: 'exact', head: true })
-    .eq('notice_id', noticeId);
+  revalidatePath('/protected/Admin/Notices');
+}
 
-  return {
-    liked: !existing,
-    likesCount: count ?? 0,
-  };
+export async function deleteNotice(id: string) {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
+
+  const { error } = await supabase
+    .from('notices')
+    .delete()
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/protected/Admin/Notices');
+}
+
+export async function deleteMeeting(id: string) {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+  const { data: profile } = await supabase
+    .from('users')
+    .select('community_id')
+    .eq('id', auth.user.id)
+    .single();
+  if (!profile?.community_id) throw new Error('ERROR_UNAUTHORIZED_COMMUNITY');
+
+  const { error } = await supabase
+    .from('meetings')
+    .delete()
+    .eq('id', id)
+    .eq('community_id', profile.community_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/protected/Admin/Notices');
 }
