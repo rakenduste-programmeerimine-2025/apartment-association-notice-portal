@@ -1,11 +1,15 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Group, Container, Paper } from '@mantine/core';
+import { Group, Container, Paper, Badge, Tooltip } from '@mantine/core';
 import { Button } from '@/components/ui/button';
 import { LogoutButton } from '@/components/logout-button';
 
-export function UserNavbar() {
+type CommunityProps = {
+  community: { id: string; full_address: string } | null;
+};
+
+export function UserNavbar({ community }: CommunityProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -34,8 +38,32 @@ export function UserNavbar() {
               );
             })}
           </Group>
+          <Group wrap="nowrap" gap="xs" justify="center" align="center">
+            <Tooltip
+              label={community?.full_address}
+              withArrow
+              color="rgba(0, 0, 0, 0.4)"
+              multiline
+              w={220}
+              position="bottom"
+            >
+              <Badge
+                variant="light"
+                title=""
+                style={{
+                  maxWidth: '220px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                }}
+              >
+                {community?.full_address}
+              </Badge>
+            </Tooltip>
 
-          <LogoutButton />
+            <LogoutButton />
+          </Group>
         </Group>
       </Container>
     </Paper>
