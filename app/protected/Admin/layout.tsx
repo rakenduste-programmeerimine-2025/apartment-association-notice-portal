@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
-import { AdminNavbar } from '@/components/NavBar/AdminNavbar';
+import AdminNavbarWrapper  from '@/components/NavBar/AdminNavbarWrapper';
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <MantineProvider theme={{ fontFamily: 'Inter, sans-serif' }}>
-      <AdminNavbar />
+      <AdminNavbarWrapper />
       {children}
     </MantineProvider>
   );

@@ -1,19 +1,23 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, Group, Container, Paper } from '@mantine/core';
+import { Button, Group, Container, Paper, Tooltip, Text, Badge } from '@mantine/core';
 import { LogoutButton } from '@/components/logout-button';
 
-export function AdminNavbar() {
+type CommunityProps = {
+  community: { id: string; full_address: string } | null;
+};
+
+export function AdminNavbar({ community }: CommunityProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   const links = [
     { href: '/protected/Admin/Notices', label: 'Notices' },
-    { href: '/protected/Admin/Worries', label: 'Worries' }, 
+    { href: '/protected/Admin/Worries', label: 'Worries' },
     { href: '/protected/Admin/Residents', label: 'Residents' },
     { href: '/protected/Admin/Create-Meetings', label: 'Create Meetings' },
-    { href: '/protected/Admin/CreateNotice', label: 'Create Notice' }, //url needs to be changed to create notice page, there is needs to be such a folder for it.
+    { href: '/protected/Admin/CreateNotice', label: 'Create Notice' },
   ];
 
   return (
@@ -35,12 +39,34 @@ export function AdminNavbar() {
               );
             })}
           </Group>
+          <Group wrap="nowrap" gap="xs" justify="center" align="center">
+            <Tooltip
+              label={community?.full_address}
+              withArrow
+              color="rgba(0, 0, 0, 0.4)"
+              multiline
+              w={220}
+              position="bottom"
+            >
+              <Badge
+                variant="light"
+                title=""
+                style={{
+                  maxWidth: '220px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                }}
+              >
+                {community?.full_address}
+              </Badge>
+            </Tooltip>
 
-          <LogoutButton />
+            <LogoutButton />
+          </Group>
         </Group>
       </Container>
     </Paper>
   );
 }
-
-
