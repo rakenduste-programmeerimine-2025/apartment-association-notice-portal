@@ -16,8 +16,8 @@ export async function POST(req: Request) {
       streetName, 
       houseNumber, 
       city, 
-      country 
       country
+
     } = body;
 
     if (!email || !password || !fullName || !flatNumber || !ads_oid) {
