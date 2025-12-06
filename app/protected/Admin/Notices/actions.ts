@@ -5,6 +5,35 @@ import { createClient } from '@/lib/supabase/server';
 import { Meeting } from '@/types/Meeting';
 import type { Notice } from '@/types/Notice';
 
+export async function deletePastMeetings() {
+  try {
+    const supabase = await createClient();
+    const now = new Date();
+
+    const { data: meetings } = await supabase
+      .from('meetings')
+      .select('id, meeting_date, duration');
+
+    if (!meetings) return;
+
+    for (const meeting of meetings) {
+      
+      const start = new Date(meeting.meeting_date.replace(' ', 'T'));
+
+      const durationHours = parseFloat(meeting.duration);
+      const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+
+      if (end < now) {
+        await supabase.from('meetings').delete().eq('id', meeting.id);
+      }
+    }
+
+    revalidatePath('/protected/Admin/Notices');
+  } catch (err) {
+    console.error('Error deleting past meetings:', err);
+  }
+}
+
 export async function getNotices(
   page = 1,
   limit = 1, // 
