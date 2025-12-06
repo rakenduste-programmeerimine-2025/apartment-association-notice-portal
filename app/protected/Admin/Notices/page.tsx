@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Flex, Divider, Group, Text, Badge } from '@mantine/core';
 import NoticeCard from '@/components/NoticeCard';
 import MeetingCard from '@/components/MeetingCard';
-import { getNotices, getMeetings } from './actions';
+import { getNotices, getMeetings,deletePastMeetings  } from './actions';
 import { Notice } from '@/types/Notice';
 import { Meeting } from '@/types/Meeting';
 import FiltersNotices from '@/components/FiltersNotices';
@@ -84,6 +84,8 @@ export default function AdminNoticesPage() {
 
   useEffect(() => {
     async function fetchData() {
+      await deletePastMeetings();////
+
       const { data, count } = await getNotices(page, itemsPerPage, category, sort);
       setNotices(data);
       setCount(count);
