@@ -99,14 +99,25 @@ export async function getMeetings(): Promise<Meeting[]> {
 
     if (!profile?.community_id) return [];
 
-    const { data, error } = await supabase
+    const { data: meetings, error } = await supabase
       .from('meetings')
-      .select('id, title, description, meeting_date, community_id, duration')
+      .select('id, title, description, meeting_date, duration, community_id')
       .eq('community_id', profile.community_id)
       .order('meeting_date', { ascending: true });
 
     if (error) throw error;
-    return data ?? [];
+
+    const now = new Date();
+
+   
+    const upcomingMeetings = (meetings ?? []).filter((meeting: any) => {
+      const start = new Date(`${meeting.meeting_date}Z`);
+      const durationHours = parseFloat(meeting.duration); 
+      const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+      return end >= now;
+    });
+
+    return upcomingMeetings;
   } catch (err) {
     console.error('Error fetching meetings:', err);
     return [];
