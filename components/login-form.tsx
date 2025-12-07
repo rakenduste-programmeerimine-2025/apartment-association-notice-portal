@@ -35,8 +35,7 @@ export function LoginForm() {
       });
 
       if (error) throw error;
-      
-      const role = authData.user?.user_metadata?.role;
+
       const userId = authData.user.id;
 
       const { data: residentRow, error: fetchErr } = await supabase
@@ -95,28 +94,37 @@ export function LoginForm() {
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
+
           <div className="flex flex-col gap-1">
             <Flex justify="space-between" align="center" w="100%">
-              <Label>Password</Label>
+              <Label htmlFor="password">Password</Label>
               <Link href="/auth/forgot-password" className="text-xs text-gray-500 hover:underline">
                 Forgot password?
               </Link>
             </Flex>
-
             <Input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
+
           <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
+
         <div className="mt-4 text-center text-sm">
           Not a member?{' '}
           <Link href="/auth/sign-up" className="underline">
