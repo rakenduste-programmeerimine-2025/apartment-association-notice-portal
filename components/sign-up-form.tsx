@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { EstonianAddress, EstonianAddressData } from '@/components/estonian-address';
-import { createClient } from '@/lib/supabase/client';
 
 export function SignUpForm() {
   const router = useRouter();
@@ -30,10 +29,12 @@ export function SignUpForm() {
       setError('Please select your address');
       return;
     }
+
     if (password !== repeatPassword) {
       setError('Passwords do not match');
       return;
     }
+
     if (password.length < 8 || !/\d/.test(password) || !/[A-Za-z]/.test(password)) {
       setError('Password must be at least 8 characters and contain letters and numbers');
       return;
@@ -78,38 +79,33 @@ export function SignUpForm() {
       <CardContent>
         <form onSubmit={handleSignUp} className="flex flex-col gap-4">
           <div>
-            <Label>Full Name</Label>
-            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
           </div>
+
           <div>
-            <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
+
           <div>
-            <Label>Password</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
+
           <div>
-            <Label>Repeat Password</Label>
-            <Input
-              type="password"
-              value={repeatPassword}
-              onChange={(e) => setRepeatPassword(e.target.value)}
-              required
-            />
+            <Label htmlFor="repeatPassword">Repeat Password</Label>
+            <Input id="repeatPassword" type="password" value={repeatPassword} onChange={(e) => setRepeatPassword(e.target.value)} required />
           </div>
+
           <div className="relative z-10">
-            <Label>Select your address</Label>
-            <EstonianAddress onSelect={setSelectedAddress} height="410px" />
+            <Label htmlFor="address">Select your address</Label>
+            <EstonianAddress onSelect={setSelectedAddress} />
           </div>
+
           <div>
-            <Label>Flat Number</Label>
-            <Input value={flatNumber} onChange={(e) => setFlatNumber(e.target.value)} required />
+            <Label htmlFor="flatNumber">Flat Number</Label>
+            <Input id="flatNumber" value={flatNumber} onChange={(e) => setFlatNumber(e.target.value)} required />
           </div>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
