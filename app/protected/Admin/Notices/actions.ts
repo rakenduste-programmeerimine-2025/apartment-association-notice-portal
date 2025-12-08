@@ -36,7 +36,7 @@ export async function deletePastMeetings() {
 
 export async function getNotices(
   page = 1,
-  limit = 1, // 
+  limit = 3, // this we can change :)
   category?: string,
   sort: 'newest' | 'oldest' = 'newest'
 ): Promise<{ data: Notice[]; count: number }> {
@@ -57,9 +57,24 @@ export async function getNotices(
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
+    //  include likesnotice  so admin can see number of likes
     let query = supabase
       .from('notices')
-      .select('id, title, content, category, community_id, created_at', { count: 'exact' })
+      .select(
+        `
+        id,
+        title,
+        content,
+        category,
+        community_id,
+        created_at,
+        likesnotice (
+          id,
+          user_id
+        )
+      `,
+        { count: 'exact' }
+      )
       .eq('community_id', profile.community_id);
 
     if (category && category !== '') {
@@ -71,9 +86,23 @@ export async function getNotices(
     const { data, count, error } = await query.range(from, to);
     if (error) throw error;
 
-    return { data: data ?? [], count: count ?? 0 };
+    // map likes into likesCount (admin doesn’t need hasLiked)
+    const notices: Notice[] =
+      (data ?? []).map((row: any) => {
+        const likes = row.likesnotice ?? [];
+        const likesCount = likes.length;
+
+        const { likesnotice, ...rest } = row;
+        return {
+          ...rest,
+          likesCount,
+        } as Notice;
+      });
+
+    return { data: notices, count: count ?? 0 };
   } catch (err) {
-    throw err;
+    console.error('Error fetching admin notices:', err);
+    return { data: [], count: 0 };
   }
 }
 
@@ -101,14 +130,19 @@ export async function getMeetings(): Promise<Meeting[]> {
     if (error) throw error;
     return data ?? [];
   } catch (err) {
-    throw err;
+    console.error('Error fetching admin meetings:', err);
+    return [];
   }
 }
 
-export async function updateNotice(id: string, values: { title: string; content: string; category: string }) {
+export async function updateNotice(
+  id: string,
+  values: { title: string; content: string; category: string }
+) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
@@ -134,6 +168,7 @@ export async function updateMeeting(
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
@@ -156,6 +191,7 @@ export async function deleteNotice(id: string) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
@@ -178,6 +214,7 @@ export async function deleteMeeting(id: string) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) throw new Error('ERROR_UNAUTHORIZED_USER');
+
   const { data: profile } = await supabase
     .from('users')
     .select('community_id')
