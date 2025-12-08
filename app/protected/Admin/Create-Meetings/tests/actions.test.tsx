@@ -42,7 +42,7 @@ beforeEach(() => {
   });
 });
 
-describe('createMeeting', () => {
+describe('actions Create-Meeting', () => {
   describe('Valid Meeting Creation', () => {
     it('successfully creates a meeting with all valid data', async () => {
       mockSupabaseFrom.mockReturnValue({
