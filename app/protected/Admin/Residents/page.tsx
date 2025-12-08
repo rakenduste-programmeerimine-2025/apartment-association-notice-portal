@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { getResidents, removeResidentAction, type AdminResident } from './actions';
+import DeleteResidentButton from './components/DeleteResidentButton';
 
 const supabase = createClient();
 
@@ -29,7 +30,6 @@ export default function AdminResidentsPage() {
       setLoading(true);
 
       try {
-        // ✅ Now filtered by admin's community in server action
         const { data } = await getResidents(1, 200, 'newest');
         setUsers(data);
       } catch (err) {
@@ -52,22 +52,6 @@ export default function AdminResidentsPage() {
       console.error('Error updating user status:', error.message);
     } else {
       setUsers((prev) => prev.map((user) => (user.id === id ? { ...user, status } : user)));
-    }
-
-    setUpdatingId(null);
-  };
-
-  const removeResident = async (id: string) => {
-    const confirmed = window.confirm('Are you sure you want to remove this resident?');
-    if (!confirmed) return;
-
-    setUpdatingId(id);
-
-    try {
-      await removeResidentAction(id);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-    } catch (err) {
-      console.error(err);
     }
 
     setUpdatingId(null);
@@ -140,14 +124,13 @@ export default function AdminResidentsPage() {
                     Approve
                   </Button>
 
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeResident(user.id)}
-                    disabled={updatingId === user.id}
-                  >
-                    Reject
-                  </Button>
+                  <DeleteResidentButton
+                    id={user.id}
+                    mode="reject"
+                    onDone={() =>
+                      setUsers((prev) => prev.filter((u) => u.id !== user.id))
+                    }
+                  />
                 </Group>
               </Group>
             </Card>
@@ -198,14 +181,13 @@ export default function AdminResidentsPage() {
                   </Stack>
                 </Group>
 
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => removeResident(user.id)}
-                  disabled={updatingId === user.id}
-                >
-                  {updatingId === user.id ? 'Removing…' : 'Remove'}
-                </Button>
+                <DeleteResidentButton
+                  id={user.id}
+                  mode="remove"
+                  onDone={() =>
+                    setUsers((prev) => prev.filter((u) => u.id !== user.id))
+                  }
+                />
               </Group>
             </Card>
           ))}

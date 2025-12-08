@@ -10,12 +10,12 @@ import {
   ScrollArea,
   Flex,
   Badge,
-  Button,
   LoadingOverlay,
 } from '@mantine/core';
-import { getWorries, deleteWorry } from './actions';
+import { getWorries } from './actions';
 import type { Worry } from '@/types/Worry';
 import FiltersWorries from '@/components/FiltersWorries';
+import DeleteButtonWorry from '@/app/protected/Admin/Worries/components/DeleteButtonWorry';
 
 export default function AdminWorriesPage() {
   const searchParams = useSearchParams();
@@ -30,7 +30,6 @@ export default function AdminWorriesPage() {
   const [count, setCount] = useState(0);
 
   const [actionLoading, setActionLoading] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const itemsPerPage = 3;
 
@@ -40,50 +39,27 @@ export default function AdminWorriesPage() {
     return `?${params.toString()}`;
   };
 
-  const fetchWorries = useCallback(async () => {
-    setActionLoading(true);
-    try {
-      const { data, count } = await getWorries(
-        page,
-        itemsPerPage,
-        sort as 'newest' | 'oldest'
-      );
-      setWorries(data);
-      setCount(count);
-    } catch (error) {
-      console.error('Error fetching worries:', error);
-      setWorries([]);
-      setCount(0);
-    } finally {
-      setActionLoading(false);
-    }
-  }, [page, sort, itemsPerPage]);
-
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm('Are you sure you want to delete this worry?');
-    if (!confirmed) return;
-
-    setDeletingId(id);
-    setActionLoading(true);
-
-    try {
-      await deleteWorry(id);
-      await fetchWorries();
-
-      if (worries.length === 1 && page > 1) {
-        const newPage = page - 1;
-        setPage(newPage);
-        router.push(buildPageUrl(newPage));
+  const fetchWorries = useCallback(
+    async (pageToLoad = page) => {
+      setActionLoading(true);
+      try {
+        const { data, count } = await getWorries(
+          pageToLoad,
+          itemsPerPage,
+          sort as 'newest' | 'oldest'
+        );
+        setWorries(data);
+        setCount(count);
+      } catch (error) {
+        console.error('Error fetching worries:', error);
+        setWorries([]);
+        setCount(0);
+      } finally {
+        setActionLoading(false);
       }
-    } catch (error: unknown) {
-      console.error('Error deleting worry:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to delete worry: ${errorMessage}`);
-    } finally {
-      setDeletingId(null);
-      setActionLoading(false);
-    }
-  };
+    },
+    [page, sort, itemsPerPage]
+  );
 
   useEffect(() => {
     setPage(Number(searchParams.get('page')) || 1);
@@ -93,13 +69,25 @@ export default function AdminWorriesPage() {
     fetchWorries();
   }, [fetchWorries]);
 
+  const handleAfterDelete = async (deletedId: string) => {
+    // same behavior as before: handle last item on page
+    if (worries.length === 1 && page > 1) {
+      const newPage = page - 1;
+      setPage(newPage);
+      router.push(buildPageUrl(newPage));
+      await fetchWorries(newPage);
+    } else {
+      await fetchWorries();
+    }
+  };
+
   const totalPages = Math.ceil(count / itemsPerPage);
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#fff' }}>
       {/* Overlay */}
       <LoadingOverlay
-        visible={actionLoading || deletingId !== null}
+        visible={actionLoading}
         zIndex={2000}
         loaderProps={{ size: 'xl', variant: 'bars', color: 'blue' }}
       />
@@ -165,14 +153,10 @@ export default function AdminWorriesPage() {
                     </Text>
                   </Stack>
 
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(worry.id)}
-                    disabled={deletingId === worry.id}
-                  >
-                    {deletingId === worry.id ? 'Deleting…' : 'Delete'}
-                  </Button>
+                  <DeleteButtonWorry
+                    id={worry.id}
+                    onDeleted={() => handleAfterDelete(worry.id)}
+                  />
                 </Group>
 
                 {worry.content && (
