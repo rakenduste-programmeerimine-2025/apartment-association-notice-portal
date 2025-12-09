@@ -35,12 +35,8 @@ export async function createMeeting(formData: FormData) {
     if (!/^\d{4}-\d{2}-\d{2}/.test(rawDate)) throw new Error("ERROR_INVALID_DATE");
     if (!/^\d{2}:\d{2}$/.test(rawTime)) throw new Error("ERROR_INVALID_TIME");
 
-    const date = new Date(rawDate);
-    const [h, m] = rawTime.split(":").map(Number);
-
-    if (Number.isNaN(h) || Number.isNaN(m)) throw new Error("ERROR_INVALID_TIME");
-    date.setHours(h);
-    date.setMinutes(m);
+    const dateTimeString = `${rawDate}T${rawTime}:00`;
+    const date = new Date(dateTimeString);
 
     if (Number.isNaN(date.getTime())) throw new Error("ERROR_INVALID_DATE");
     if (date < new Date()) throw new Error("ERROR_CANNOT_CREATE_MEETING_IN_THE_PAST");
@@ -61,7 +57,7 @@ export async function createMeeting(formData: FormData) {
     const { error: insertErr } = await supabase.from("meetings").insert({
       title,
       description,
-      meeting_date: date.toISOString(),
+      meeting_date: dateTimeString,
       created_by: auth.user.id,
       duration,
       community_id: profile.community_id,
