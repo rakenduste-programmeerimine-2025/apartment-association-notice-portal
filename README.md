@@ -7,7 +7,7 @@ It supports user roles (Admin and Resident), community organization, announcemen
 ## Features
 
 ### 1. User Management
-- User registration and login  
+- User registration,login and update password  
 - Role-based access control with two levels:
   - **Admin**
   - **Resident**
@@ -24,12 +24,16 @@ It supports user roles (Admin and Resident), community organization, announcemen
 
 ### 3. Admin Board Notices
 - **Admin**
-  - Create, read, and delete notices  
+  - Create, read, and delete notices
+  - Filter Notices
+  - Pagination
   - Categories:
     - General Notices  
     - Maintenance & Repairs  
     - Safety  
 - **Resident**
+  - Filter Notices
+  - Pagination
   - View notices  
   - React to notices with "Likes"
 
@@ -44,7 +48,7 @@ It supports user roles (Admin and Resident), community organization, announcemen
 
 ### 5. Meeting Management
 - **Admin**
-  - Create and read meetings  
+  - Create,edit,delete and read meetings  
 - **Resident**
   - View all community meetings 
 
@@ -125,15 +129,6 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 
-## Feedback and issues
-
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
 
 Aleksandra 
 Alina
